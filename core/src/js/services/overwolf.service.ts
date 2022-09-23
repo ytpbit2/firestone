@@ -569,6 +569,14 @@ export class OverwolfService {
 			});
 		});
 	}
+	public async openFilePicker(filter: string): Promise<any> {
+		return new Promise<boolean>((resolve) => {
+			overwolf.utils.openFilePicker(filter, (res: any) => {
+				resolve(res);
+			});
+		});
+	}
+
 
 	public async openWindowsExplorer(path: string): Promise<any> {
 		return new Promise<boolean>((resolve) => {

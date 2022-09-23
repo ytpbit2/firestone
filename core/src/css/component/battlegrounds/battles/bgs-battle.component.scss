@@ -44,17 +44,20 @@
 			::ng-deep {
 				.battle-simulation {
 					align-items: center;
+
 					.warning {
 						position: relative;
 						left: -15px;
 					}
 				}
+
 				.probas,
 				.damage-container {
 					border: none;
 					padding: 0;
 					margin-bottom: 15px;
 				}
+
 				.damage-container {
 					display: none;
 				}
@@ -122,6 +125,7 @@
 				&.won {
 					color: #61ff47;
 				}
+
 				&.lost {
 					color: #ff4747;
 				}
@@ -296,7 +300,9 @@
 
 				.reset,
 				.export,
-				.import {
+				.import, 
+				.importfile, 
+				.exportfile {
 					display: flex;
 					align-items: flex-end;
 					justify-content: center;
