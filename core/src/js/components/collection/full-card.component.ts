@@ -1,12 +1,24 @@
-import { ChangeDetectionStrategy, Component, EventEmitter, Input, Output } from '@angular/core';
+import {
+	AfterContentInit,
+	ChangeDetectionStrategy,
+	ChangeDetectorRef,
+	Component,
+	EventEmitter,
+	Input,
+	Output,
+	ViewRef,
+} from '@angular/core';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import { ReferenceCard, ReferenceCardAudio } from '@firestone-hs/reference-data';
 import { CardsFacadeService } from '@services/cards-facade.service';
+import { BehaviorSubject, combineLatest } from 'rxjs';
 import { SetCard } from '../../models/set';
 import { SetsService } from '../../services/collection/sets-service.service';
 import { formatClass } from '../../services/hs-utils';
 import { LocalizationFacadeService } from '../../services/localization-facade.service';
+import { AppUiStoreFacadeService } from '../../services/ui-store/app-ui-store-facade.service';
 import { capitalizeEachWord, pickRandom } from '../../services/utils';
+import { AbstractSubscriptionComponent } from '../abstract-subscription.component';
 
 declare let amplitude;
 
@@ -76,7 +88,7 @@ declare let amplitude;
 	`,
 	changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class FullCardComponent {
+export class FullCardComponent extends AbstractSubscriptionComponent implements AfterContentInit {
 	// eslint-disable-next-line @angular-eslint/no-output-native
 	@Output() close = new EventEmitter();
 
@@ -95,59 +107,84 @@ export class FullCardComponent {
 	// Soi we can cancel a playing sound if a new card is displayed
 	private previousClips: readonly AudioClip[] = [];
 
+	private selectedCard$$ = new BehaviorSubject<SetCard | ReferenceCard>(null);
+
 	@Input() set selectedCard(selectedCard: SetCard | ReferenceCard) {
 		if (!selectedCard) {
 			return;
 		}
 
-		console.debug('set card', selectedCard);
-		this.previousClips = this.audioClips || [];
-		this.audioCategories = this.buildAudio(selectedCard);
-		this.audioClips = this.audioCategories
-			.map((cat: AudioClipCategory) => cat.clips)
-			.reduce((a, b) => a.concat(b), []);
-
-		const card = this.cards.getCard(selectedCard.id);
-		// Because the high res images we have for the heroes are a bit weird
-		this.isHero = card.type === 'Hero';
-		this.card = card as InternalReferenceCard;
-		if (
-			(selectedCard as SetCard).ownedNonPremium ||
-			(selectedCard as SetCard).ownedPremium ||
-			(selectedCard as SetCard).ownedDiamond
-		) {
-			this.showCount = true;
-			this.card.ownedPremium = (selectedCard as SetCard).ownedPremium;
-			this.card.ownedNonPremium = (selectedCard as SetCard).ownedNonPremium;
-			this.card.ownedDiamond = (selectedCard as SetCard).ownedDiamond;
-		} else {
-			this.showCount = false;
-		}
-		this.card.owned = this.card.ownedPremium || this.card.ownedNonPremium;
-		this.class = card.classes?.length
-			? card.classes.map((playerClass) => formatClass(playerClass, this.i18n)).join(', ')
-			: card.playerClass != null
-			? formatClass(card.playerClass, this.i18n)
-			: null;
-
-		this.type = this.i18n.translateString(`app.collection.card-details.types.${card.type?.toLowerCase()}`);
-		this.set = this.i18n.translateString(`global.set.${card.set?.toLowerCase()}`);
-		this.rarity =
-			card.rarity != null
-				? this.i18n.translateString(`app.collection.card-details.rarities.${card.rarity?.toLowerCase()}`)
-				: null;
-		const flavorSource = card.flavor ?? card.text;
-		this.flavor = flavorSource?.length
-			? this.sanitizer.bypassSecurityTrustHtml(this.transformFlavor(flavorSource))
-			: null;
+		this.selectedCard$$.next(selectedCard);
 	}
 
 	constructor(
+		protected readonly store: AppUiStoreFacadeService,
+		protected readonly cdr: ChangeDetectorRef,
 		private readonly i18n: LocalizationFacadeService,
 		private readonly cards: SetsService,
 		private readonly allCards: CardsFacadeService,
 		private readonly sanitizer: DomSanitizer,
-	) {}
+	) {
+		super(store, cdr);
+	}
+
+	ngAfterContentInit() {
+		combineLatest(
+			this.selectedCard$$.asObservable(),
+			this.listenForBasicPref$((prefs) => prefs.locale),
+		)
+			.pipe(this.mapData(([selectedCard, locale]) => ({ selectedCard, locale })))
+			.subscribe((info) => {
+				const selectedCard = info.selectedCard;
+				const locale = info.locale;
+				console.debug('set card', selectedCard);
+				this.previousClips = this.audioClips || [];
+				this.audioCategories = this.buildAudio(selectedCard, locale);
+				this.audioClips = this.audioCategories
+					.map((cat: AudioClipCategory) => cat.clips)
+					.reduce((a, b) => a.concat(b), []);
+
+				const card = this.cards.getCard(selectedCard.id);
+				// Because the high res images we have for the heroes are a bit weird
+				this.isHero = card.type === 'Hero';
+				this.card = card as InternalReferenceCard;
+				if (
+					(selectedCard as SetCard).ownedNonPremium ||
+					(selectedCard as SetCard).ownedPremium ||
+					(selectedCard as SetCard).ownedDiamond
+				) {
+					this.showCount = true;
+					this.card.ownedPremium = (selectedCard as SetCard).ownedPremium;
+					this.card.ownedNonPremium = (selectedCard as SetCard).ownedNonPremium;
+					this.card.ownedDiamond = (selectedCard as SetCard).ownedDiamond;
+				} else {
+					this.showCount = false;
+				}
+				this.card.owned = this.card.ownedPremium || this.card.ownedNonPremium;
+				this.class = card.classes?.length
+					? card.classes.map((playerClass) => formatClass(playerClass, this.i18n)).join(', ')
+					: card.playerClass != null
+					? formatClass(card.playerClass, this.i18n)
+					: null;
+
+				this.type = this.i18n.translateString(`app.collection.card-details.types.${card.type?.toLowerCase()}`);
+				this.set = this.i18n.translateString(`global.set.${card.set?.toLowerCase()}`);
+				this.rarity =
+					card.rarity != null
+						? this.i18n.translateString(
+								`app.collection.card-details.rarities.${card.rarity?.toLowerCase()}`,
+						  )
+						: null;
+				const flavorSource = card.flavor ?? card.text;
+				this.flavor = flavorSource?.length
+					? this.sanitizer.bypassSecurityTrustHtml(this.transformFlavor(flavorSource))
+					: null;
+				console.debug('updated flavor', this.flavor, flavorSource, card);
+				if (!(this.cdr as ViewRef)?.destroyed) {
+					this.cdr.detectChanges();
+				}
+			});
+	}
 
 	playSound(audioClip: AudioClip) {
 		amplitude.getInstance().logEvent('sound', {
@@ -178,7 +215,7 @@ export class FullCardComponent {
 		this.close.emit(null);
 	}
 
-	private buildAudio(inputCard: ReferenceCard | SetCard): readonly AudioClipCategory[] {
+	private buildAudio(inputCard: ReferenceCard | SetCard, locale: string): readonly AudioClipCategory[] {
 		const card = this.allCards.getCard(inputCard.id);
 		if (!(card as ReferenceCard).audio2) {
 			return [];
@@ -187,23 +224,27 @@ export class FullCardComponent {
 		const result = [
 			{
 				name: this.i18n.translateString('app.collection.card-details.sounds.category.basic'),
-				clips: this.buildAudioClips(card.audio2, 'basic'),
+				clips: this.buildAudioClips(card.audio2, 'basic', locale),
 			},
 			{
 				name: this.i18n.translateString('app.collection.card-details.sounds.category.spell'),
-				clips: this.buildAudioClips(card.audio2, 'spell'),
+				clips: this.buildAudioClips(card.audio2, 'spell', locale),
 			},
 			{
 				name: this.i18n.translateString('app.collection.card-details.sounds.category.emote'),
-				clips: this.buildAudioClips(card.audio2, 'emote', 'emote'),
+				clips: this.buildAudioClips(card.audio2, 'emote', locale),
 			},
 			{
 				name: this.i18n.translateString('app.collection.card-details.sounds.category.event'),
-				clips: this.buildAudioClips(card.audio2, 'emote', 'event'),
+				clips: this.buildAudioClips(card.audio2, 'event', locale),
 			},
 			{
 				name: this.i18n.translateString('app.collection.card-details.sounds.category.error'),
-				clips: this.buildAudioClips(card.audio2, 'emote', 'error'),
+				clips: this.buildAudioClips(card.audio2, 'error', locale),
+			},
+			{
+				name: this.i18n.translateString('app.collection.card-details.sounds.category.disabled'),
+				clips: this.buildAudioClips(card.audio2, 'disabled', locale),
 			},
 		];
 		const allMappedClips = result
@@ -214,7 +255,7 @@ export class FullCardComponent {
 		allMappedClips.forEach((key) => delete otherAudio[key]);
 		const otherCategory = {
 			name: this.i18n.translateString('app.collection.card-details.sounds.category.other'),
-			clips: this.buildAudioClips(otherAudio, null),
+			clips: this.buildAudioClips(otherAudio, null, locale),
 		};
 
 		return [...result, otherCategory].filter((cat) => cat.clips.length > 0);
@@ -222,18 +263,11 @@ export class FullCardComponent {
 
 	private buildAudioClips(
 		audio: ReferenceCardAudio,
-		type: 'basic' | 'spell' | 'emote' | null,
-		category?: string,
+		category: 'basic' | 'spell' | 'emote' | 'event' | 'error' | 'disabled' | null,
+		locale: string,
 	): readonly AudioClip[] {
 		return Object.keys(audio)
-			.filter((key) =>
-				type !== null
-					? key.toLowerCase().includes(type + '_')
-					: !key.toLowerCase().includes('basic_') &&
-					  !key.toLowerCase().includes('spell_') &&
-					  !key.toLowerCase().includes('emote_'),
-			)
-			.filter((key) => !category || this.REGEXES.find((regex) => regex.regex.test(key))?.category === category)
+			.filter((key) => !category || this.REGEXES.find((regex) => key.match(regex.regex))?.category === category)
 			.map((key) => {
 				const audioGroup = audio[key];
 				const mainFiles = Object.values(audioGroup).flatMap((effect) => effect.mainSounds);
@@ -247,8 +281,18 @@ export class FullCardComponent {
 					name: this.getSoundName(key),
 					originalKey: key,
 					audioGroup: audioGroup,
-					audios: files.map((file) =>
-						this.createAudio(file, `https://static.zerotoheroes.com/hearthstone/audio/${file}`),
+					audios: files.flatMap((file) =>
+						// We don't know beforehand if the file is localized or not, so we try to load both versions
+						[
+							this.createAudio(
+								file,
+								`https://static.zerotoheroes.com/hearthstone/audio/sounds/common/${file}`,
+							),
+							this.createAudio(
+								file,
+								`https://static.zerotoheroes.com/hearthstone/audio/sounds/${locale}/${file}`,
+							),
+						],
 					),
 				};
 				audioClip.audios.forEach((audio) => audio.load());
@@ -257,248 +301,272 @@ export class FullCardComponent {
 			.filter((audio) => audio.name);
 	}
 
-	// The order is important, as the first match is always returned
-	private readonly REGEXES = [
-		{
-			regex: /.*GREETINGS.*/g,
-			value: this.i18n.translateString('app.collection.card-details.sounds.effect.greetings'),
-			category: 'emote',
-		},
-		{
-			regex: /.*GREETINGS_RESPONSE.*/g,
-			value: this.i18n.translateString('app.collection.card-details.sounds.effect.greetings-response'),
-			category: 'emote',
-		},
-		{
-			regex: /.*WELL_?PLAYED.*/g,
-			value: this.i18n.translateString('app.collection.card-details.sounds.effect.well-played'),
-			category: 'emote',
-		},
-		{
-			regex: /.*OOPS.*/g,
-			value: this.i18n.translateString('app.collection.card-details.sounds.effect.oops'),
-			category: 'emote',
-		},
-		{
-			regex: /.*THREATEN.*/g,
-			value: this.i18n.translateString('app.collection.card-details.sounds.effect.threaten'),
-			category: 'emote',
-		},
-		{
-			regex: /.*THANKS.*/g,
-			value: this.i18n.translateString('app.collection.card-details.sounds.effect.thanks'),
-			category: 'emote',
-		},
-		{
-			regex: /.*SORRY.*/g,
-			value: this.i18n.translateString('app.collection.card-details.sounds.effect.sorry'),
-			category: 'emote',
-		},
-		{
-			regex: /.*WOW.*/g,
-			value: this.i18n.translateString('app.collection.card-details.sounds.effect.wow'),
-			category: 'emote',
-		},
-		{
-			regex: /.*CONCEDE.*/g,
-			value: this.i18n.translateString('app.collection.card-details.sounds.effect.concede'),
-			category: 'emote',
-		},
-		{
-			regex: /.*START.*/g,
-			value: this.i18n.translateString('app.collection.card-details.sounds.effect.start'),
-			category: 'emote',
-		},
-		{
-			regex: /.*TIMER?.*/g,
-			value: this.i18n.translateString('app.collection.card-details.sounds.effect.timer'),
-			category: 'emote',
-		},
-		{
-			regex: /.*THINK(?:ING_0)?1.*/g,
-			value: this.i18n.translateString('app.collection.card-details.sounds.effect.think-1'),
-			category: 'emote',
-		},
-		{
-			regex: /.*THINK(?:ING_0)?2.*/g,
-			value: this.i18n.translateString('app.collection.card-details.sounds.effect.think-2'),
-			category: 'emote',
-		},
-		{
-			regex: /.*THINK(?:ING_0)?3.*/g,
-			value: this.i18n.translateString('app.collection.card-details.sounds.effect.think-3'),
-			category: 'emote',
-		},
-		{
-			regex: /.*LOW_?CARDS.*/g,
-			value: this.i18n.translateString('app.collection.card-details.sounds.effect.low-cards'),
-			category: 'emote',
-		},
-		{
-			regex: /.*NO_?CARDS.*/g,
-			value: this.i18n.translateString('app.collection.card-details.sounds.effect.no-cards'),
-			category: 'emote',
-		},
-		{
-			regex: /.*WON.*/g,
-			value: this.i18n.translateString('app.collection.card-details.sounds.effect.won'),
-			category: 'emote',
-		},
-		{
-			regex: /.*MIRROR_START.*/g,
-			value: this.i18n.translateString('app.collection.card-details.sounds.effect.mirror-start'),
-			category: 'emote',
-		},
-		{
-			regex: /.*ERROR_NEED_WEAPON.*/g,
-			value: this.i18n.translateString('app.collection.card-details.sounds.effect.error-need-weapon'),
-			category: 'error',
-		},
-		{
-			regex: /.*ERROR_NEED_MANA.*/g,
-			value: this.i18n.translateString('app.collection.card-details.sounds.effect.error-need-mana'),
-			category: 'error',
-		},
-		{
-			regex: /.*ERROR_MINION_ATTACKED.*/g,
-			value: this.i18n.translateString('app.collection.card-details.sounds.effect.error-minion-attacked'),
-			category: 'error',
-		},
-		{
-			regex: /.*ERROR_I_ATTACKED.*/g,
-			value: this.i18n.translateString('app.collection.card-details.sounds.effect.error-i-attacked'),
-			category: 'error',
-		},
-		{
-			regex: /.*ERROR_JUST_PLAYED.*|.*SUMMON_SICKNESS.*/g,
-			value: this.i18n.translateString('app.collection.card-details.sounds.effect.error-just-played'),
-			category: 'error',
-		},
-		{
-			regex: /.*ERROR_HAND_FULL.*/g,
-			value: this.i18n.translateString('app.collection.card-details.sounds.effect.error-hand-full'),
-			category: 'error',
-		},
-		{
-			regex: /.*ERROR_FULL_MINIONS.*/g,
-			value: this.i18n.translateString('app.collection.card-details.sounds.effect.error-full-minions'),
-			category: 'error',
-		},
-		{
-			regex: /.*ERROR_STEALTH.*/g,
-			value: this.i18n.translateString('app.collection.card-details.sounds.effect.error-stealth'),
-			category: 'error',
-		},
-		{
-			regex: /.*ERROR_PLAY.*/g,
-			value: this.i18n.translateString('app.collection.card-details.sounds.effect.error-play'),
-			category: 'error',
-		},
-		{
-			regex: /.*ERROR_TARGET.*/g,
-			value: this.i18n.translateString('app.collection.card-details.sounds.effect.error-target'),
-			category: 'error',
-		},
-		{
-			regex: /.*ERROR_TAUNT.*/g,
-			value: this.i18n.translateString('app.collection.card-details.sounds.effect.error-taunt'),
-			category: 'error',
-		},
-		{
-			regex: /.*ERROR_GENERIC.*/g,
-			value: this.i18n.translateString('app.collection.card-details.sounds.effect.error-generic'),
-			category: 'error',
-		},
-		{
-			regex: /.*WINTERVEIL_GREETINGS.*/g,
-			value: this.i18n.translateString('app.collection.card-details.sounds.effect.winterveil-greetings'),
-			category: 'event',
-		},
-		{
-			regex: /.*HAPPY_HOLIDAYS.*/g,
-			value: this.i18n.translateString('app.collection.card-details.sounds.effect.happy-holidays'),
-			category: 'event',
-		},
-		{
-			regex: /.*EVENT_LUNAR_NEW_YEAR.*|.*HAPPY_NEW_YEAR_LUNAR.*/g,
-			value: this.i18n.translateString('app.collection.card-details.sounds.effect.lunar-new-year'),
-			category: 'event',
-		},
-		{
-			regex: /.*HAPPY_NEW_YEAR.*/g,
-			value: this.i18n.translateString('app.collection.card-details.sounds.effect.happy-new-year'),
-			category: 'event',
-		},
-		{
-			regex: /.*FIRE_FESTIVAL.*/g,
-			value: this.i18n.translateString('app.collection.card-details.sounds.effect.fire-festival'),
-			category: 'event',
-		},
-		{
-			regex: /.*PIRATE_DAY.*/g,
-			value: this.i18n.translateString('app.collection.card-details.sounds.effect.pirate-day'),
-			category: 'event',
-		},
-		{
-			regex: /.*HALLOWS_END.*|.*HAPPY_HALLOWEEN.*/g,
-			value: this.i18n.translateString('app.collection.card-details.sounds.effect.hallows-end'),
-			category: 'event',
-		},
-		{
-			regex: /.*NOBLEGARDEN.*/g,
-			value: this.i18n.translateString('app.collection.card-details.sounds.effect.noblegarden'),
-			category: 'event',
-		},
-		{
-			regex: /.*PICKED.*/g,
-			value: this.i18n.translateString('app.collection.card-details.sounds.effect.picked'),
-			category: 'other',
-		},
-	];
-
 	private getSoundName(key: string): string {
 		if (!key) {
 			return null;
 		}
-
-		key = key.toUpperCase();
-		switch (key) {
-			case 'BASIC_PLAY':
-				return this.i18n.translateString('app.collection.card-details.sounds.effect.play');
-			case 'BASIC_DEATH':
-				return this.i18n.translateString('app.collection.card-details.sounds.effect.death');
-			case 'BASIC_ATTACK':
-				return this.i18n.translateString('app.collection.card-details.sounds.effect.attack');
-		}
 		for (const regex of this.REGEXES) {
-			// I have no idea why, but testing the regex once doesn't always work for some,
-			// while redoing the test fixes the isse
-			if (regex.regex.test(key) || regex.regex.test(key)) {
+			if (key.match(regex.regex)) {
 				return regex.value;
 			}
 		}
 		return key
 			? capitalizeEachWord(
 					key
-						.replace(/SPELL/g, '')
-						.replace(/Spell/g, '')
-						.replace(/spell/g, '')
-						// Order is important here
-						.replace(/Hero(_\d*[a-z]?)?/g, '')
-						.replace(/HERO(_\d*[a-z]?)?/g, '')
-						.replace(/VO__Male/g, '')
-						.replace(/VO__Female/g, '')
-						.replace(/VO__(MALE)?/g, '')
-						.replace(/VO__(FEMALE)?/g, '')
-						.replace(/VO_/g, '')
-						.replace(/MALE_/g, '')
-						.replace(/Male_/g, '')
-						.replace(/Female_/g, '')
+						.replace(/SPELL/gi, '')
+						.replace(/VO_(STORY_)?HERO(_\d+[A-Z]*)?/gi, '')
+						.replace(/VO_([A-Z]+_?\d+)?/gi, '')
+						.replace(/FEMALE_[A-Z-]+_/gi, '')
+						.replace(/MALE_[A-Z-]+_/gi, '')
 						.replace(/_/g, ' ')
 						.trim(),
 			  )
 			: '';
 	}
+
+	// The order is important, as the first match is always returned
+	private readonly REGEXES = [
+		{
+			regex: /.*BASIC_PLAY.*/gi,
+			value: this.i18n.translateString('app.collection.card-details.sounds.effect.play'),
+			category: 'basic',
+		},
+		{
+			regex: /.*BASIC_DEATH.*/gi,
+			value: this.i18n.translateString('app.collection.card-details.sounds.effect.death'),
+			category: 'basic',
+		},
+		{
+			regex: /.*BASIC_ATTACK.*/gi,
+			value: this.i18n.translateString('app.collection.card-details.sounds.effect.attack'),
+			category: 'basic',
+		},
+		{
+			regex: /.*PICKED.*|VO_HERO_09_Male_Human_Emote_(06|07)|VO_HERO_03_Female_BloodElf_Emote_(05|10)|VO_HERO_01_Male_Orc_Emote_01/gi,
+			value: this.i18n.translateString('app.collection.card-details.sounds.effect.picked'),
+			category: 'basic',
+		},
+
+		{
+			regex: /.*WINTERVEIL_GREETINGS.*|.*HAPPY_HOLIDAYS.*/gi,
+			value: this.i18n.translateString('app.collection.card-details.sounds.effect.winterveil-greetings'),
+			category: 'event',
+		},
+		{
+			regex: /.*LUNAR_NEW_YEAR.*|.*HAPPY_NEW_YEAR_LUNAR.*/gi,
+			value: this.i18n.translateString('app.collection.card-details.sounds.effect.lunar-new-year'),
+			category: 'event',
+		},
+		{
+			regex: /.*HAPPY_NEW_YEAR.*/gi,
+			value: this.i18n.translateString('app.collection.card-details.sounds.effect.happy-new-year'),
+			category: 'event',
+		},
+		{
+			regex: /.*FIRE_FESTIVAL.*/gi,
+			value: this.i18n.translateString('app.collection.card-details.sounds.effect.fire-festival'),
+			category: 'event',
+		},
+		{
+			regex: /.*PIRATE_DAY.*/gi,
+			value: this.i18n.translateString('app.collection.card-details.sounds.effect.pirate-day'),
+			category: 'event',
+		},
+		{
+			regex: /.*HALLOWS_END.*|.*HAPPY_HALLOWEEN.*/gi,
+			value: this.i18n.translateString('app.collection.card-details.sounds.effect.hallows-end'),
+			category: 'event',
+		},
+		{
+			regex: /.*NOBLEGARDEN.*/gi,
+			value: this.i18n.translateString('app.collection.card-details.sounds.effect.noblegarden'),
+			category: 'event',
+		},
+		{
+			regex: /.*HOLIDAY.*/gi,
+			value: this.i18n.translateString('app.collection.card-details.sounds.effect.holiday'),
+			category: 'event',
+		},
+
+		{
+			regex: /.*GREETINGS_DISABLED.*/gi,
+			value: this.i18n.translateString('app.collection.card-details.sounds.effect.greetings'),
+			category: 'disabled',
+		},
+		{
+			regex: /.*WELL_PLAYED_DISABLED.*/gi,
+			value: this.i18n.translateString('app.collection.card-details.sounds.effect.well-played'),
+			category: 'disabled',
+		},
+		{
+			regex: /.*THANKS_DISABLED.*/gi,
+			value: this.i18n.translateString('app.collection.card-details.sounds.effect.thanks'),
+			category: 'disabled',
+		},
+		{
+			regex: /.*THREATEN_DISABLED.*/gi,
+			value: this.i18n.translateString('app.collection.card-details.sounds.effect.threaten'),
+			category: 'disabled',
+		},
+		{
+			regex: /.*OOPS_DISABLED.*/gi,
+			value: this.i18n.translateString('app.collection.card-details.sounds.effect.oops'),
+			category: 'disabled',
+		},
+
+		{
+			regex: /.*START_?MIRROR.*|.*MIRROR_?START.*/gi,
+			value: this.i18n.translateString('app.collection.card-details.sounds.effect.start-mirror'),
+			category: 'emote',
+		},
+		{
+			regex: /.*GREETINGS_?MIRROR.*|.*MIRROR_?GREETINGS.*/gi,
+			value: this.i18n.translateString('app.collection.card-details.sounds.effect.greetings-mirror'),
+			category: 'emote',
+		},
+		{
+			regex: /.*GREETINGS_?RESPONSE.*/gi,
+			value: this.i18n.translateString('app.collection.card-details.sounds.effect.greetings-response'),
+			category: 'emote',
+		},
+		{
+			regex: /.*GREETINGS.*/gi,
+			value: this.i18n.translateString('app.collection.card-details.sounds.effect.greetings'),
+			category: 'emote',
+		},
+
+		{
+			regex: /.*WELL_?PLAYED.*|VO_HERO_03_Female_BloodElf_Emote_04/gi,
+			value: this.i18n.translateString('app.collection.card-details.sounds.effect.well-played'),
+			category: 'emote',
+		},
+		{
+			regex: /.*OOPS.*|VO_HERO_03_Female_BloodElf_Emote_07/gi,
+			value: this.i18n.translateString('app.collection.card-details.sounds.effect.oops'),
+			category: 'emote',
+		},
+		{
+			regex: /.*THREATEN.*|VO_HERO_09_Male_Human_Emote_03|VO_HERO_03_Female_BloodElf_Emote_08|VO_HERO_01_Male_Orc_Emote_10/gi,
+			value: this.i18n.translateString('app.collection.card-details.sounds.effect.threaten'),
+			category: 'emote',
+		},
+		{
+			regex: /.*THANKS.*/gi,
+			value: this.i18n.translateString('app.collection.card-details.sounds.effect.thanks'),
+			category: 'emote',
+		},
+		{
+			regex: /.*SORRY.*/gi,
+			value: this.i18n.translateString('app.collection.card-details.sounds.effect.sorry'),
+			category: 'emote',
+		},
+		{
+			regex: /.*WOW.*/gi,
+			value: this.i18n.translateString('app.collection.card-details.sounds.effect.wow'),
+			category: 'emote',
+		},
+		{
+			regex: /.*CONCEDE.*/gi,
+			value: this.i18n.translateString('app.collection.card-details.sounds.effect.concede'),
+			category: 'emote',
+		},
+		{
+			regex: /.*START.*|VO_HERO_09_Male_Human_Emote_10|VO_HERO_03_Female_BloodElf_Emote_01|VO_HERO_01_Male_Orc_Emote_12/gi,
+			value: this.i18n.translateString('app.collection.card-details.sounds.effect.start'),
+			category: 'emote',
+		},
+		{
+			regex: /.*TIMER?.*/gi,
+			value: this.i18n.translateString('app.collection.card-details.sounds.effect.timer'),
+			category: 'emote',
+		},
+		{
+			regex: /.*THINK(?:ING)?.*/gi,
+			value: this.i18n.translateString('app.collection.card-details.sounds.effect.think'),
+			category: 'emote',
+		},
+		{
+			regex: /.*LOW_?CARDS.*/gi,
+			value: this.i18n.translateString('app.collection.card-details.sounds.effect.low-cards'),
+			category: 'emote',
+		},
+		{
+			regex: /.*NO_?CARDS.*/gi,
+			value: this.i18n.translateString('app.collection.card-details.sounds.effect.no-cards'),
+			category: 'emote',
+		},
+		{
+			regex: /.*WON.*/gi,
+			value: this.i18n.translateString('app.collection.card-details.sounds.effect.won'),
+			category: 'emote',
+		},
+		{
+			regex: /.*IDLE.*/gi,
+			value: this.i18n.translateString('app.collection.card-details.sounds.effect.idle'),
+			category: 'emote',
+		},
+
+		{
+			regex: /.*ERROR_01.*|.*ERROR_NEED_WEAPON.*/gi,
+			value: this.i18n.translateString('app.collection.card-details.sounds.effect.error-need-weapon'),
+			category: 'error',
+		},
+		{
+			regex: /.*ERROR_02.*|.*ERROR_NEED_MANA.*/gi,
+			value: this.i18n.translateString('app.collection.card-details.sounds.effect.error-need-mana'),
+			category: 'error',
+		},
+		{
+			regex: /.*ERROR_03.*|.*ERROR_MINION_ATTACKED.*/gi,
+			value: this.i18n.translateString('app.collection.card-details.sounds.effect.error-minion-attacked'),
+			category: 'error',
+		},
+		{
+			regex: /.*ERROR_04.*|.*ERROR_I_ATTACKED.*/gi,
+			value: this.i18n.translateString('app.collection.card-details.sounds.effect.error-i-attacked'),
+			category: 'error',
+		},
+		{
+			regex: /.*ERROR_05.*|.*ERROR_JUST_PLAYED.*|.*SUMMON_SICKNESS.*/gi,
+			value: this.i18n.translateString('app.collection.card-details.sounds.effect.error-just-played'),
+			category: 'error',
+		},
+		{
+			regex: /.*ERROR_06.*|.*ERROR_HAND_FULL.*/gi,
+			value: this.i18n.translateString('app.collection.card-details.sounds.effect.error-hand-full'),
+			category: 'error',
+		},
+		{
+			regex: /.*ERROR_07.*|.*ERROR_FULL_MINIONS.*|.*ERRORSPACE.*/gi,
+			value: this.i18n.translateString('app.collection.card-details.sounds.effect.error-full-minions'),
+			category: 'error',
+		},
+		{
+			regex: /.*ERROR_08.*|.*ERROR_STEALTH.*/gi,
+			value: this.i18n.translateString('app.collection.card-details.sounds.effect.error-stealth'),
+			category: 'error',
+		},
+		{
+			regex: /.*ERROR_09.*|.*ERROR_PLAY.*/gi,
+			value: this.i18n.translateString('app.collection.card-details.sounds.effect.error-play'),
+			category: 'error',
+		},
+		{
+			regex: /.*ERROR_10.*|.*ERROR_TARGET.*/gi,
+			value: this.i18n.translateString('app.collection.card-details.sounds.effect.error-target'),
+			category: 'error',
+		},
+		{
+			regex: /.*ERROR_11.*|.*ERROR_TAUNT.*/gi,
+			value: this.i18n.translateString('app.collection.card-details.sounds.effect.error-taunt'),
+			category: 'error',
+		},
+		{
+			regex: /.*ERROR_12.*|.*ERROR_GENERIC.*/gi,
+			value: this.i18n.translateString('app.collection.card-details.sounds.effect.error-generic'),
+			category: 'error',
+		},
+	];
 
 	private cancelPlayingSounds() {
 		this.previousClips.forEach((sound) => {
