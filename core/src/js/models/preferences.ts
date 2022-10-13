@@ -75,6 +75,7 @@ export class Preferences {
 	readonly enableQuestsWidget: boolean = true;
 	readonly showQuestsWidgetWhenEmpty: boolean = false;
 	readonly showQuestsInGame: boolean = true;
+	readonly useStreamerMode: boolean = false;
 
 	readonly advancedModeToggledOn: boolean;
 
@@ -362,6 +363,10 @@ export class Preferences {
 	@Reflect.metadata(FORCE_LOCAL_PROP, true)
 	readonly playerBrilliantMacawCounterWidgetPosition: { left: number; top: number };
 
+	readonly playerMonstrousParrotCounter: boolean = true;
+	@Reflect.metadata(FORCE_LOCAL_PROP, true)
+	readonly playerMonstrousParrotCounterWidgetPosition: { left: number; top: number };
+
 	readonly playerVanessaVanCleefCounter: boolean = true;
 	@Reflect.metadata(FORCE_LOCAL_PROP, true)
 	readonly playerVanessaVanCleefCounterWidgetPosition: { left: number; top: number };
@@ -564,7 +569,9 @@ export class Preferences {
 
 	readonly twitchAccessToken: string;
 	readonly twitchUserName: string;
+	readonly twitchLoginName: string;
 	readonly twitchDelay: number = 0;
+	readonly appearOnLiveStreams: boolean = true;
 
 	readonly outOfCardsToken: OutOfCardsToken;
 	readonly outOfCardsShowNotifOnSync: boolean = false;

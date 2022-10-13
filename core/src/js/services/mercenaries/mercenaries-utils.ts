@@ -10,6 +10,10 @@ export const normalizeMercenariesCardId = (
 	if (!cardId?.length) {
 		return null;
 	}
+	// Some abilities (like Ysera's Emerald Oracle) have an id that finishes with an "a" for all levels
+	// except the last one.
+	// However, some other abilities (like Anathema / Benediction) share the same root id, and differ
+	// only wiht a/b, so we need to keep the suffix
 	let skinMatch = cardId.match(/.*_(\d\d)([ab]?)$/);
 	if (skinMatch) {
 		return cardId.replace(/(.*)(_\d\d)([ab]?)$/, '$1_01$3');
@@ -159,7 +163,7 @@ export const getShortMercHeroName = (cardId: string, allCards: CardsFacadeServic
 };
 
 export const getHeroRole = (roleFromEnum: string): 'caster' | 'fighter' | 'protector' => {
-	switch (roleFromEnum) {
+	switch (roleFromEnum?.toUpperCase()) {
 		case TagRole[TagRole.CASTER]:
 			return 'caster';
 		case TagRole[TagRole.FIGHTER]:
@@ -209,45 +213,102 @@ export const isPassiveMercsTreasure = (cardId: string, allCards: CardsFacadeServ
 	const refCard = allCards.getCard(cardId);
 	return (
 		refCard?.mercenaryPassiveAbility ||
-		// For Start of game effects
 		refCard.mechanics?.includes(GameTag[GameTag.HIDE_STATS]) ||
+		refCard.mechanics?.includes(GameTag[GameTag.HIDE_COST]) ||
 		refCard.mechanics?.includes(GameTag[GameTag.START_OF_GAME])
 	);
 };
 
-export const BUFF_SPEED_MODIFIER_ENCHANTMENTS = [
-	// CardIds.AdventurersPackLettuceEnchantment,
-	CardIds.AmuletOfSwiftnessLettuceEnchantment,
-	CardIds.BootsOfHasteLettuceEnchantment,
-	CardIds.CenarionSurgeLettuceEnchantment,
-	CardIds.CasterHasteLettuceEnchantment,
-	CardIds.DreadbladesLettuceEnchantment,
-	// CardIds.ElunesGraceLettuceEnchantment,
-	CardIds.EnduranceAuraLettuceEnchantment_LETL_319e2, // 1 is the taunt
-	CardIds.EnduranceAuraLettuceEnchantment_LETL_319e3,
-	CardIds.FanOfKnivesLettuceEnchantment, // Check that it's the correct card ID
-	CardIds.FighterHasteLettuceEnchantment,
-	CardIds.HammerOfJusticeLettuceEnchantment,
-	CardIds.HeatingUpLettuceEnchantment,
-	CardIds.HeroicLeapLettuceEnchantment,
-	CardIds.ManaBlinkLettuceEnchantment,
-	CardIds.ProtectorHasteLettuceEnchantment,
-	CardIds.RingOfHasteLettuceEnchantment,
-	CardIds.SlipperyWhenWetLettuceEnchantment_LT23_024E2e2,
-	CardIds.StringOfFateLettuceEnchantment,
-	CardIds.UnnaturalSmokeLettuceEnchantment,
+export const BUFF_SPEED_MODIFIER_ENCHANTMENTS: readonly {
+	enchantment: string;
+	targets?: readonly string[];
+}[] = [
+	{
+		enchantment: CardIds.AmuletOfSwiftnessLettuceEnchantment,
+		targets: [
+			CardIds.DragonqueensGambit1Lettuce,
+			CardIds.DragonqueensGambit2Lettuce,
+			CardIds.DragonqueensGambit3Lettuce,
+			CardIds.DragonqueensGambit4Lettuce,
+			CardIds.DragonqueensGambit5Lettuce,
+		],
+	},
+	{
+		enchantment: CardIds.BootsOfHasteLettuceEnchantment,
+	},
+	{
+		enchantment: CardIds.CenarionSurgeLettuceEnchantment,
+	},
+	{
+		enchantment: CardIds.CasterHasteLettuceEnchantment,
+	},
+	{
+		enchantment: CardIds.DealOfTime_DontWasteItLettuceEnchantment,
+	},
+	{
+		enchantment: CardIds.DreadbladesLettuceEnchantment,
+		targets: [
+			CardIds.BurgleBarrage1Lettuce,
+			CardIds.BurgleBarrage2Lettuce,
+			CardIds.BurgleBarrage3Lettuce,
+			CardIds.BurgleBarrage4Lettuce,
+			CardIds.BurgleBarrage5Lettuce,
+		],
+	},
+	{
+		enchantment: CardIds.EnduranceAuraLettuceEnchantment_LETL_319e2, // 1 is the taunt
+	},
+	{
+		enchantment: CardIds.EnduranceAuraLettuceEnchantment_LETL_319e3,
+	},
+	{
+		enchantment: CardIds.FanOfKnivesLettuceEnchantment,
+	},
+	{
+		enchantment: CardIds.FighterHasteLettuceEnchantment,
+	},
+	{
+		enchantment: CardIds.HeatingUpLettuceEnchantment,
+	},
+	{
+		enchantment: CardIds.HeroicLeapLettuceEnchantment,
+	},
+	{
+		enchantment: CardIds.ManaBlinkLettuceEnchantment,
+	},
+	{
+		enchantment: CardIds.ProtectorHasteLettuceEnchantment,
+	},
+	{
+		enchantment: CardIds.RainOfChaosLettuceEnchantment,
+	},
+	{
+		enchantment: CardIds.RingOfHasteLettuceEnchantment,
+	},
+	{
+		enchantment: CardIds.SlipperyWhenWetLettuceEnchantment_LT23_024E2e2,
+	},
+	{
+		enchantment: CardIds.StringOfFateLettuceEnchantment,
+	},
+	{
+		enchantment: CardIds.UnnaturalSmokeLettuceEnchantment,
+	},
 ];
 
 export const DEBUFF_SPEED_MODIFIER_ENCHANTMENTS = [
+	CardIds.OffBalanceLettuceEnchantment,
 	CardIds.DoomedLettuceEnchantment,
 	CardIds.EarthStompLettuceEnchantment,
 	CardIds.EmeraldRootsLettuceEnchantment,
 	CardIds.FlurryLettuceEnchantment,
 	CardIds.FrostbiteLettuceEnchantment,
+	CardIds.HammerOfJusticeLettuceEnchantment,
 	CardIds.MuddyFootingLettuceEnchantment,
 	// CardIds.RingOfSluggishnessLettuceEnchantment,
 	CardIds.ShadowShockLettuceEnchantment,
 	CardIds.StaggeredLettuceEnchantment,
 	CardIds.ThunderStruckLettuceEnchantment,
+	// CardIds.ThreeMovesAheadLettuceEnchantment,
 	CardIds.VaingloriousRebukeLettuceEnchantment,
 ];

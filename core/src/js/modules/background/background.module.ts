@@ -292,6 +292,8 @@ import { MercenariesPvpMmrFilterDropdownComponent } from '../../components/merce
 import { MercenariesRoleFilterDropdownComponent } from '../../components/mercenaries/desktop/filters/mercenaries-role-filter-dropdown.component';
 import { MercenariesStarterFilterDropdownComponent } from '../../components/mercenaries/desktop/filters/mercenaries-starter-filter-dropdown.component';
 import { MercenariesFiltersComponent } from '../../components/mercenaries/desktop/filters/_mercenaries-filters.component';
+import { MercenariesCompositionStatComponent } from '../../components/mercenaries/desktop/mercenaries-composition-stat.component';
+import { MercenariesCompositionsStatsComponent } from '../../components/mercenaries/desktop/mercenaries-compositions-stats.component';
 import { MercenariesDesktopComponent } from '../../components/mercenaries/desktop/mercenaries-desktop.component';
 import { MercenariesEmptyStateComponent } from '../../components/mercenaries/desktop/mercenaries-empty-state.component';
 import { MercenariesMetaHeroDetailsComponent } from '../../components/mercenaries/desktop/mercenaries-meta-hero-details.component';
@@ -307,8 +309,6 @@ import { MercenariesPersonalTeamSummaryComponent } from '../../components/mercen
 import { MercenariesHeroSearchComponent } from '../../components/mercenaries/desktop/secondary/mercenaries-hero-search.component';
 import { MercenariesHeroDetailsComponent } from '../../components/mercenaries/desktop/toberebuilt_mercenaries-hero-details.component';
 import { MercenariesComposiionDetailsComponent } from '../../components/mercenaries/desktop/unused_mercenaries-composition-details.component';
-import { MercenariesCompositionStatComponent } from '../../components/mercenaries/desktop/unused_mercenaries-composition-stat.component';
-import { MercenariesCompositionsStatsComponent } from '../../components/mercenaries/desktop/unused_mercenaries-compositions-stats.component';
 import { MercenariesActionsQueueComponent } from '../../components/mercenaries/overlay/action-queue/mercenaries-action-queue..component';
 import { MercenariesActionComponent } from '../../components/mercenaries/overlay/action-queue/mercenaries-action.component';
 import { MercenariesHighlightDirective } from '../../components/mercenaries/overlay/teams/mercenaries-highlight.directive';
@@ -364,6 +364,7 @@ import { PlayerHeroPowerDamageWidgetWrapperComponent } from '../../components/ov
 import { PlayerJadeWidgetWrapperComponent } from '../../components/overlays/counters/player-jade-widget-wrapper.component';
 import { PlayerLadyDarkveinWidgetWrapperComponent } from '../../components/overlays/counters/player-lady-darkvein-widget-wrapper.component';
 import { PlayerLibramWidgetWrapperComponent } from '../../components/overlays/counters/player-libram-widget-wrapper.component';
+import { PlayerMonstrousParrotWidgetWrapperComponent } from '../../components/overlays/counters/player-monstrous-parrot-widget-wrapper.component';
 import { PlayerMulticasterWidgetWrapperComponent } from '../../components/overlays/counters/player-multicaster-widget-wrapper.component';
 import { PlayerMurozondTheInfiniteWidgetWrapperComponent } from '../../components/overlays/counters/player-murozond-widget-wrapper.component';
 import { PlayerPogoWidgetWrapperComponent } from '../../components/overlays/counters/player-pogo-widget-wrapper.component';
@@ -465,6 +466,12 @@ import { StatsXpSeasonFilterDropdownComponent } from '../../components/stats/des
 import { StatsFiltersComponent } from '../../components/stats/desktop/filters/_stats-filters.component';
 import { StatsDesktopComponent } from '../../components/stats/desktop/stats-desktop.component';
 import { StatsXpGraphComponent } from '../../components/stats/desktop/stats-xp-graph.component';
+import {
+	LiveStreamInfoComponent,
+	StreamHeroInfosComponent,
+} from '../../components/streams/desktop/live-stream-info.component';
+import { LiveStreamsComponent } from '../../components/streams/desktop/live-streams.component';
+import { StreamsDesktopComponent } from '../../components/streams/desktop/streams-desktop.component';
 import { OutOfCardsCallbackComponent } from '../../components/third-party/out-of-cards-callback.component';
 import { AchievementsManager } from '../../services/achievement/achievements-manager.service';
 import { AchievementsMonitor } from '../../services/achievement/achievements-monitor.service';
@@ -524,6 +531,7 @@ import { LocalizationService } from '../../services/localization.service';
 import { LogListenerService } from '../../services/log-listener.service';
 import { LogRegisterService } from '../../services/log-register.service';
 import { LogsUploaderService } from '../../services/logs-uploader.service';
+import { LiveStreamsService } from '../../services/mainwindow/live-streams.service';
 import { OutOfCardsService } from '../../services/mainwindow/out-of-cards.service';
 import { CollaboratorsService } from '../../services/mainwindow/store/collaborators.service';
 import { CollectionBootstrapService } from '../../services/mainwindow/store/collection-bootstrap.service';
@@ -531,6 +539,7 @@ import { AchievementUpdateHelper } from '../../services/mainwindow/store/helper/
 import { MainWindowStoreService } from '../../services/mainwindow/store/main-window-store.service';
 import { StoreBootstrapService } from '../../services/mainwindow/store/store-bootstrap.service';
 import { TwitchAuthService } from '../../services/mainwindow/twitch-auth.service';
+import { TwitchPresenceService } from '../../services/mainwindow/twitch-presence.service';
 import { EndGameListenerService } from '../../services/manastorm-bridge/end-game-listener.service';
 import { EndGameUploaderService } from '../../services/manastorm-bridge/end-game-uploader.service';
 import { GameParserService } from '../../services/manastorm-bridge/game-parser.service';
@@ -947,6 +956,11 @@ const components = [
 		MercenariesFullyUpgradedFilterDropdownComponent,
 		MercenariesOwnedFilterDropdownComponent,
 
+		StreamsDesktopComponent,
+		LiveStreamsComponent,
+		LiveStreamInfoComponent,
+		StreamHeroInfosComponent,
+
 		StatsDesktopComponent,
 		StatsXpGraphComponent,
 		StatsFiltersComponent,
@@ -1021,6 +1035,7 @@ const components = [
 		PlayerCthunWidgetWrapperComponent,
 		PlayerBolnerWidgetWrapperComponent,
 		PlayerBrilliantMacawWidgetWrapperComponent,
+		PlayerMonstrousParrotWidgetWrapperComponent,
 		PlayerVanessaVanCleefWidgetWrapperComponent,
 		PlayerMurozondTheInfiniteWidgetWrapperComponent,
 		PlayerLadyDarkveinWidgetWrapperComponent,
@@ -1128,6 +1143,7 @@ const components = [
 		LazyDataInitService,
 		GameStatusService,
 		QuestsService,
+		LiveStreamsService,
 
 		AppUiStoreService,
 		AppUiStoreFacadeService,
@@ -1148,6 +1164,7 @@ const components = [
 		LogRegisterService,
 		SettingsCommunicationService,
 		TwitchAuthService,
+		TwitchPresenceService,
 		OutOfCardsService,
 		GameNativeStateStoreService,
 

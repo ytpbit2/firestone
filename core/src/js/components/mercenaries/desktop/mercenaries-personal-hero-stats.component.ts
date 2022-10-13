@@ -16,11 +16,11 @@ import {
 import { CardsFacadeService } from '../../../services/cards-facade.service';
 import { MercenariesPersonalHeroesSortEvent } from '../../../services/mainwindow/store/events/mercenaries/mercenaries-personal-heroes-sort-event';
 import { MercenariesReferenceData } from '../../../services/mercenaries/mercenaries-state-builder.service';
-import { getHeroRole, normalizeMercenariesCardId } from '../../../services/mercenaries/mercenaries-utils';
+import { getHeroRole } from '../../../services/mercenaries/mercenaries-utils';
 import { AppUiStoreFacadeService } from '../../../services/ui-store/app-ui-store-facade.service';
 import { cdLog } from '../../../services/ui-store/app-ui-store.service';
 import { applySearchStringFilter, buildBounties } from '../../../services/ui-store/mercenaries-ui-helper';
-import { areDeepEqual, sumOnArray } from '../../../services/utils';
+import { areDeepEqual, sortByProperties, sumOnArray } from '../../../services/utils';
 import { AbstractSubscriptionComponent } from '../../abstract-subscription.component';
 
 @Component({
@@ -201,7 +201,7 @@ export class MercenariesPersonalHeroStatsComponent extends AbstractSubscriptionC
 		if (!refMerc) {
 			return null;
 		}
-		// const debug = refMerc.name === 'Chi-Ji';
+		const debug = refMerc.id === 329;
 		const mercenaryCard = this.allCards.getCardFromDbfId(refMerc.cardDbfId);
 		const taskChain = referenceData.taskChains
 			.filter((chain) => chain.mercenaryId === refMerc.id)
@@ -225,6 +225,9 @@ export class MercenariesPersonalHeroStatsComponent extends AbstractSubscriptionC
 		const lastLevel = [...referenceData.mercenaryLevels].pop();
 		const isMaxLevel = memMerc.Level === lastLevel.currentLevel;
 		const abilities = this.buildAbilities(refMerc, memMerc);
+		debug && console.log('abilities 1', abilities);
+		debug && console.log('abilities 1', refMerc.abilities);
+		debug && console.log('abilities 1', memMerc.Abilities);
 		const equipments = this.buildEquipments(refMerc, memMerc);
 		const bountiesForMerc: readonly BountyForMerc[] = buildBounties(refMerc, referenceData.bountySets);
 
@@ -312,16 +315,29 @@ export class MercenariesPersonalHeroStatsComponent extends AbstractSubscriptionC
 			// 	refEquip,
 			// 	memEquip,
 			// );
+			const tierIndex =
+				currentUnlockedTier > 0
+					? [...refEquip.tiers]
+							.sort(sortByProperties((e) => [e.tier]))
+							.map((e) => e.tier)
+							.indexOf(currentUnlockedTier)
+					: null;
+			// console.debug(
+			// 	'tierIndex',
+			// 	refMerc.name,
+			// 	equipmentCard.name,
+			// 	tierIndex,
+			// 	currentUnlockedTier,
+			// 	[...refEquip.tiers].sort(sortByProperties((e) => [e.tier])).map((e) => e.tier),
+			// 	refEquip,
+			// );
+			// Some equipments that only have 1 or 2 tiers still number their tiers as 1, 2, etc. while we would expect
+			// them to be 3, 4
+			const actualTier = tierIndex != null ? tierIndex + 1 + (4 - refEquip.tiers.length) : null;
 			return {
 				cardId: equipmentCard.id ?? baseEquipmentCard.id,
 				coinsToCraft: coinsToCraft,
-				tier:
-					currentUnlockedTier > 0
-						? refEquip.tiers?.length === 1
-							? // For some reason a few single-tier equipments are stored as tier 1 instead of tier 4, so we manually correct this
-							  4
-							: currentUnlockedTier
-						: currentUnlockedTier,
+				tier: actualTier,
 				owned: !!memEquip?.Owned,
 				isEquipped: !!memEquip ? memEquip.Equipped : false,
 			};
@@ -336,8 +352,8 @@ export class MercenariesPersonalHeroStatsComponent extends AbstractSubscriptionC
 			.filter((info) => info)
 			.map((info) => {
 				const baseAbilityCard = this.allCards.getCardFromDbfId(info.cardDbfId);
-				const memAbility = memMerc.Abilities.find(
-					(a) => normalizeMercenariesCardId(a.CardId) === normalizeMercenariesCardId(baseAbilityCard.id),
+				const memAbility = memMerc.Abilities.find((a) =>
+					info.tiers.some((t) => this.allCards.getCardFromDbfId(t.cardDbfId).id === a.CardId),
 				);
 				const refAbility = refMerc.abilities.find((a) => a.abilityId === info.abilityId);
 

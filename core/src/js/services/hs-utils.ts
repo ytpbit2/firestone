@@ -77,6 +77,7 @@ export const battlecryGlobalEffectCards = [
 	CardIds.AldorAttendant,
 	CardIds.AldorTruthseeker,
 	CardIds.ArchbishopBenedictus,
+	CardIds.BladeOfTheBurningSun,
 	CardIds.CommandTheElements_StormcallerBrukanToken,
 	CardIds.DarkInquisitorXanesh,
 	CardIds.DarkPharaohTekahn,
@@ -94,6 +95,7 @@ export const battlecryGlobalEffectCards = [
 	CardIds.LorekeeperPolkelt,
 	CardIds.LothraxionTheRedeemed,
 	CardIds.NeeruFireblade_BAR_919,
+	CardIds.OrderInTheCourt,
 	CardIds.PrinceKeleseth,
 	CardIds.RadiantLightspawn,
 	CardIds.RiseToTheOccasion_LightbornCarielToken,
@@ -104,6 +106,7 @@ export const battlecryGlobalEffectCards = [
 	CardIds.SowTheSeeds,
 	CardIds.SowTheSeedsTavernBrawl,
 	CardIds.AzsharanScavenger_SunkenScavengerToken,
+	CardIds.AzsharanGardens_SunkenGardensToken,
 	CardIds.TopiorTheShrubbagazzor,
 	CardIds.TheDemonSeed_BlightbornTamsinToken,
 	CardIds.TheStonewright,
@@ -111,6 +114,8 @@ export const battlecryGlobalEffectCards = [
 	CardIds.WildheartGuff,
 	CardIds.WyrmrestPurifier,
 ];
+
+export const startOfGameGlobalEffectCards = [CardIds.PrinceRenathal];
 
 export const globalEffectCards = [
 	...battlecryGlobalEffectCards,
@@ -128,7 +133,6 @@ export const globalEffectCards = [
 	CardIds.InvigoratingSermon,
 	CardIds.LunasPocketGalaxy,
 	CardIds.MenAtArmsTavernBrawlToken,
-	CardIds.PrinceRenathal,
 	CardIds.ReductomaraToken,
 	// CardIds.RelicOfDimensions,
 	// CardIds.RelicOfExtinction,
@@ -141,6 +145,9 @@ export const globalEffectCards = [
 	CardIds.UpgradedPackMule,
 	CardIds.Wildfire,
 ];
+
+export const globalEffectPowers = [CardIds.DewProcess];
+export const globalEffectPowersAlsoOpponent = [CardIds.DewProcess];
 
 export const globalEffectTriggers = [
 	{
@@ -182,6 +189,7 @@ export const cardsRevealedWhenDrawn = [
 	CardIds.DeckOfWonders_ScrollOfWonderToken,
 	CardIds.EncumberedPackMule,
 	CardIds.FaldoreiStrider_SpiderAmbush,
+	CardIds.Framester_FramedToken,
 	CardIds.DreadlichTamsin_FelRiftToken,
 	CardIds.FlyBy_KadoomBotToken,
 	CardIds.HakkarTheSoulflayer_CorruptedBloodToken,
@@ -212,6 +220,7 @@ export const forcedHiddenCardCreators = [
 	// CardIds.MadameLazul,
 	CardIds.MaskOfMimicry,
 	CardIds.MaskOfMimicryTavernBrawl,
+	CardIds.NellieTheGreatThresher_NelliesPirateShipToken,
 	// CardIds.MindVisionLegacy,
 	// CardIds.MindVisionVanilla,
 	// So that even "revealed when drawn" cards are not revelaed when plundered by Hooktusk
@@ -233,6 +242,7 @@ export const hideInfoWhenPlayerPlaysIt = [
 	// However, it has the side-effect of hiding the cards drawn by the opponent
 	CardIds.GhastlyGravedigger,
 	CardIds.IdentityTheft,
+	CardIds.IncriminatingPsychic,
 	CardIds.KoboldIllusionist,
 	CardIds.MadameLazul,
 	CardIds.MindVisionLegacy,
@@ -260,6 +270,7 @@ export const publicCardGiftCreators = [
 	// For some reason the coin is flagged as created by the coin...
 	...COIN_IDS,
 	CardIds.AbyssalWave,
+	CardIds.Acrobatics,
 	CardIds.AdorableInfestation,
 	CardIds.AirRaid_YOD_012,
 	CardIds.AmalgamOfTheDeep,
@@ -275,8 +286,10 @@ export const publicCardGiftCreators = [
 	CardIds.BagOfCoins_LOOTA_836,
 	CardIds.BagOfCoins_Story_11_BagofCoinsPuzzle,
 	CardIds.BagOfCoinsTavernBrawl,
+	CardIds.BananaBuffoon,
 	CardIds.BattleVicar,
 	CardIds.BaubleOfBeetles_ULDA_307,
+	CardIds.BazaarMugger,
 	CardIds.Questionquestionquestion_BlackSoulstoneTavernBrawl,
 	CardIds.BlessingOfTheAncients_DAL_351,
 	CardIds.BloodsailFlybooter,
@@ -285,6 +298,7 @@ export const publicCardGiftCreators = [
 	CardIds.BringOnRecruitsTavernBrawl,
 	CardIds.BronzeExplorer,
 	CardIds.BronzeHerald,
+	CardIds.BronzeSignetTavernBrawl,
 	CardIds.BuildASnowman,
 	CardIds.BuildASnowman_BuildASnowbruteToken,
 	CardIds.BuildASnowman_BuildASnowgreToken,
@@ -299,12 +313,13 @@ export const publicCardGiftCreators = [
 	CardIds.CommanderSivara_Story_11_Sivara,
 	CardIds.CommandTheElements_StormcallerBrukanToken,
 	CardIds.CommandTheElements_TameTheFlamesToken, // Stormcaller Brukan
+	CardIds.ConchsCall,
 	CardIds.ConfectionCyclone,
 	CardIds.ConjureManaBiscuit,
 	CardIds.ConjurersCalling_DAL_177,
 	CardIds.CorsairCache,
 	CardIds.CrystallineOracle,
-	CardIds.DeathBlossomWhomper,
+	CardIds.DeeprunEngineer,
 	CardIds.DefendTheDwarvenDistrict_KnockEmDownToken, // For Tavish
 	CardIds.DesperateMeasures_DAL_141,
 	CardIds.DevouringSwarm,
@@ -339,8 +354,11 @@ export const publicCardGiftCreators = [
 	CardIds.FirstFlame,
 	CardIds.FirstWishTavernBrawl,
 	CardIds.SecondWishTavernBrawl,
+	CardIds.FiretreeWitchdoctor,
 	CardIds.FishyFlyer,
+	CardIds.Framester,
 	CardIds.FreshScent_YOD_005,
+	CardIds.FrightenedFlunky,
 	CardIds.FrostShardsTavernBrawl,
 	CardIds.FrozenTouch,
 	CardIds.FrozenTouch_FrozenTouchToken,
@@ -354,6 +372,7 @@ export const publicCardGiftCreators = [
 	CardIds.GrandLackeyErkh,
 	CardIds.Guidance_YOP_024,
 	CardIds.HalazziTheLynx,
+	CardIds.Harpoon,
 	CardIds.HeadcrackLegacy,
 	CardIds.HeadcrackVanilla,
 	CardIds.HeistbaronTogwaggle_DAL_417,
@@ -368,6 +387,7 @@ export const publicCardGiftCreators = [
 	CardIds.InfestedGoblin,
 	CardIds.InFormation,
 	CardIds.Jackpot,
+	CardIds.JarDealer,
 	CardIds.JerryRigCarpenter,
 	CardIds.JourneyBelow_OG_072,
 	CardIds.Kazakus_CFM_621,
@@ -376,6 +396,7 @@ export const publicCardGiftCreators = [
 	CardIds.KingMuklaLegacy,
 	CardIds.KingMuklaVanilla,
 	CardIds.KoboldTaskmaster,
+	CardIds.TheCountess_LegendaryInvitationToken,
 	CardIds.LicensedAdventurer,
 	CardIds.LightforgedBlessing_DAL_568,
 	CardIds.LivewireLance,
@@ -386,6 +407,8 @@ export const publicCardGiftCreators = [
 	CardIds.LorewalkerCho,
 	CardIds.LorewalkerChoLegacy,
 	CardIds.LostInThePark_FeralFriendsyToken, // Guff the Tough
+	CardIds.LyraTheSunshard,
+	CardIds.LyraTheSunshardCore,
 	CardIds.MadameLazul,
 	CardIds.MailboxDancer,
 	CardIds.Mankrik,
@@ -398,6 +421,7 @@ export const publicCardGiftCreators = [
 	CardIds.MuckbornServant,
 	CardIds.MurlocHolmes_REV_022,
 	CardIds.MurlocHolmes_REV_770,
+	CardIds.MysteryWinner,
 	CardIds.MysticalMirage_ULDA_035,
 	CardIds.NatureStudies_SCH_333,
 	CardIds.OnyxMagescribe,
@@ -405,6 +429,7 @@ export const publicCardGiftCreators = [
 	CardIds.OpenTheWaygate,
 	CardIds.OptimizedPolarityTavernBrawl,
 	CardIds.NellieTheGreatThresher_NelliesPirateShipToken,
+	CardIds.NetherspiteHistorian,
 	CardIds.PackKodo,
 	CardIds.PalmReading,
 	CardIds.PandarenImporter,
@@ -424,6 +449,7 @@ export const publicCardGiftCreators = [
 	CardIds.RamCommander,
 	CardIds.RamkahenWildtamer,
 	CardIds.RapidFire_DAL_373,
+	CardIds.RatsOfExtraordinarySize,
 	CardIds.RayOfFrost_DAL_577,
 	CardIds.Reconnaissance,
 	CardIds.Renew_BT_252,
@@ -440,11 +466,12 @@ export const publicCardGiftCreators = [
 	CardIds.SeekGuidance_IlluminateTheVoidToken, // Xyrella, the Sanctified
 	CardIds.SelectiveBreederCore,
 	CardIds.SerpentWig_TSC_215,
+	CardIds.ServiceBell,
 	CardIds.ShadowVisions,
 	CardIds.SinfulSousChef,
 	CardIds.SinisterDeal,
 	CardIds.SirakessCultist,
-	CardIds.SirFinleySeaGuide,
+	// CardIds.SirFinleySeaGuide, // Otherwise it flags all cards drawn as "create by Sir Finley"
 	CardIds.SkyRaider,
 	CardIds.Sleetbreaker,
 	CardIds.SludgeSlurper,
@@ -460,6 +487,7 @@ export const publicCardGiftCreators = [
 	CardIds.SpringpawCore,
 	CardIds.SketchyStranger,
 	CardIds.StaffOfAmmunae_ULDA_041,
+	CardIds.Starseeker,
 	CardIds.StewardOfScrolls_SCH_245,
 	CardIds.SunkenSweeper,
 	CardIds.SuspiciousAlchemist_AMysteryEnchantment, // The one that really counts
@@ -472,6 +500,7 @@ export const publicCardGiftCreators = [
 	CardIds.TheCandlesquestion,
 	CardIds.TheCandlesquestion_TheCandlesquestion_DALA_714a,
 	CardIds.TheCandlesquestion_TheCandlesquestion_DALA_714b,
+	CardIds.TheCountess,
 	CardIds.TheForestsAid_DAL_256,
 	CardIds.TheLobotomizer,
 	CardIds.ThistleTea,
@@ -487,9 +516,13 @@ export const publicCardGiftCreators = [
 	CardIds.VanessaVancleefCore,
 	CardIds.VenomousScorpid,
 	CardIds.VioletSpellwing,
+	CardIds.VulperaScoundrel,
 	CardIds.Wandmaker,
 	CardIds.WandThief_SCH_350,
 	CardIds.WhispersOfEvil,
+	CardIds.WildGrowthCore,
+	CardIds.WildGrowthLegacy,
+	CardIds.WildGrowthVanilla,
 	CardIds.WitchwoodApple,
 	CardIds.WorthyExpedition,
 	CardIds.YseraTheDreamerCore,
@@ -507,10 +540,12 @@ export const cardTutors = [
 	CardIds.AllianceBannerman,
 	CardIds.AncientMysteries,
 	CardIds.Ancharrr,
+	CardIds.AquaticForm_TSC_654,
 	CardIds.ArcaneFletcher,
 	CardIds.Arcanologist,
 	CardIds.ArcanologistCore,
 	CardIds.AxeBerserker,
+	CardIds.BadLuckAlbatross,
 	CardIds.BalindaStonehearth,
 	CardIds.BarakKodobane_BAR_551,
 	CardIds.Bogshaper,
@@ -527,14 +562,17 @@ export const cardTutors = [
 	CardIds.CaptureColdtoothMine_MoreSupplies,
 	CardIds.CaptureColdtoothMine_MoreResources,
 	CardIds.CavernShinyfinder,
+	CardIds.CheatDeath,
 	CardIds.ClawMachine,
 	CardIds.CountessAshmore,
 	CardIds.Crystology,
 	CardIds.CursedCastaway,
 	CardIds.DeadRinger,
+	CardIds.DeathBlossomWhomper,
 	CardIds.DeepwaterEvoker,
 	CardIds.DivingGryphon,
 	CardIds.DoorOfShadows,
+	CardIds.DropletOfInsanityTavernBrawlToken,
 	CardIds.DunBaldarBunker,
 	CardIds.ElementalAllies,
 	CardIds.ElementaryReaction, // falls in both cases
@@ -583,6 +621,7 @@ export const cardTutors = [
 	CardIds.PrimalDungeoneer,
 	CardIds.PrimordialProtector_BAR_042,
 	CardIds.PrismaticLens,
+	CardIds.PsionicProbe,
 	CardIds.RadarDetector_TSC_079,
 	CardIds.RadarDetector_Story_11_RadarDetector,
 	CardIds.RaidingParty,
@@ -610,6 +649,8 @@ export const cardTutors = [
 	CardIds.StageDive,
 	CardIds.StageDive_StageDive,
 	CardIds.Starscryer,
+	CardIds.StarseekersTools,
+	CardIds.StarseekersToolsTavernBrawl,
 	CardIds.StonehearthVindicator,
 	CardIds.StormChaser,
 	CardIds.Stowaway,
@@ -886,6 +927,9 @@ export const getDefaultBoosterIdForSetId = (setId: string): BoosterType => {
 		case 'the_sunken_city':
 		case 'throne_of_tides':
 			return BoosterType.THE_SUNKEN_CITY;
+		case 'revendreth':
+		case 'maw_and_disorder':
+			return BoosterType.REVENDRETH;
 		default:
 			console.warn('no default booster type for set id', setId);
 			return null;
@@ -920,6 +964,7 @@ export const COUNTERSPELLS = [
 	CardIds.BeaststalkerTavish_ImprovedIceTrapToken,
 	// Even though it's a specific enchantment that counters the spell, the trigger entity is the minion itself
 	CardIds.BlademasterOkani,
+	CardIds.Objection,
 ];
 
 export const getDefaultHeroDbfIdForClass = (playerClass: string): number => {

@@ -6,7 +6,7 @@ import { GameState } from '../../../models/decktracker/game-state';
 import { GameEvent } from '../../../models/game-event';
 import { battlecryGlobalEffectCards, COUNTERSPELLS, globalEffectCards } from '../../hs-utils';
 import { LocalizationFacadeService } from '../../localization-facade.service';
-import { modifyDeckForSpecialCards } from './deck-contents-utils';
+import { modifyDecksForSpecialCards } from './deck-contents-utils';
 import { DeckManipulationHelper } from './deck-manipulation-helper';
 import { EventParser } from './event-parser';
 
@@ -40,6 +40,7 @@ export class CardPlayedByEffectParser implements EventParser {
 
 		const isPlayer = controllerId === localPlayer.PlayerId;
 		const deck = isPlayer ? currentState.playerDeck : currentState.opponentDeck;
+		const opponentDeck = !isPlayer ? currentState.playerDeck : currentState.opponentDeck;
 
 		const isCardCountered =
 			((additionalInfo?.secretWillTrigger?.reactingToEntityId &&
@@ -91,12 +92,13 @@ export class CardPlayedByEffectParser implements EventParser {
 			globalEffects: newGlobalEffects,
 		} as DeckState);
 		//console.debug('is card countered?', isCardCountered, secretWillTrigger, cardId);
-		const deckAfterSpecialCaseUpdate: DeckState = isCardCountered
-			? newPlayerDeck
-			: modifyDeckForSpecialCards(cardId, newPlayerDeck, this.allCards, this.i18n);
+		const [playerDeckAfterSpecialCaseUpdate, opponentDeckAfterSpecialCaseUpdate] = isCardCountered
+			? [newPlayerDeck, opponentDeck]
+			: modifyDecksForSpecialCards(cardId, newPlayerDeck, opponentDeck, this.allCards, this.i18n);
 
 		return Object.assign(new GameState(), currentState, {
-			[isPlayer ? 'playerDeck' : 'opponentDeck']: deckAfterSpecialCaseUpdate,
+			[isPlayer ? 'playerDeck' : 'opponentDeck']: playerDeckAfterSpecialCaseUpdate,
+			[!isPlayer ? 'playerDeck' : 'opponentDeck']: opponentDeckAfterSpecialCaseUpdate,
 		});
 	}
 
