@@ -64,9 +64,12 @@ export const cardIs = (...cardIds: readonly CardIds[]) => (handler: Handler): bo
 };
 
 export const spellPlayedThisMatch = (handler: Handler, deckState: DeckState, options?: SelectorOptions): boolean => {
-	return deckState?.spellsPlayedThisMatch
-		.map((spell) => spell.entityId)
-		.includes(handler.deckCardProvider()?.entityId);
+	return (
+		deckState?.spellsPlayedThisMatch
+			.map((spell) => spell.entityId)
+			.includes(handler.deckCardProvider()?.entityId) ||
+		deckState?.spellsPlayedThisMatch.map((spell) => spell.entityId).includes(-handler.deckCardProvider()?.entityId)
+	);
 };
 export const cardsPlayedThisMatch = (handler: Handler, deckState: DeckState, options?: SelectorOptions): boolean => {
 	return (
@@ -135,10 +138,14 @@ export const pirate = race(Race.PIRATE);
 export const imp = hasMechanic(GameTag.IMP);
 export const whelp = hasMechanic(GameTag.WHELP);
 
+export const currentClass = (handler: Handler, deckState: DeckState, options?: SelectorOptions): boolean => {
+	return handler.referenceCardProvider()?.cardClass === deckState?.hero?.playerClass?.toUpperCase();
+};
 export const cardClass = (cardClass: CardClass) => (handler: Handler): boolean => {
 	return handler.referenceCardProvider()?.cardClass === CardClass[cardClass];
 };
 export const neutral = cardClass(CardClass.NEUTRAL);
+export const paladin = cardClass(CardClass.PALADIN);
 export const rogue = cardClass(CardClass.ROGUE);
 
 export const rarity = (rarity: RarityTYpe) => (handler: Handler): boolean => {

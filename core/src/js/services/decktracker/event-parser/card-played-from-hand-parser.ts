@@ -4,9 +4,9 @@ import { DeckCard } from '../../../models/decktracker/deck-card';
 import { DeckState } from '../../../models/decktracker/deck-state';
 import { GameState, ShortCard } from '../../../models/decktracker/game-state';
 import { GameEvent } from '../../../models/game-event';
-import { COUNTERSPELLS, globalEffectCards } from '../../hs-utils';
+import { COUNTERSPELLS, globalEffectCards, startOfGameGlobalEffectCards } from '../../hs-utils';
 import { LocalizationFacadeService } from '../../localization-facade.service';
-import { modifyDeckForSpecialCards } from './deck-contents-utils';
+import { modifyDecksForSpecialCards } from './deck-contents-utils';
 import { DeckManipulationHelper } from './deck-manipulation-helper';
 import { EventParser } from './event-parser';
 
@@ -40,6 +40,7 @@ export class CardPlayedFromHandParser implements EventParser {
 
 		const isPlayer = controllerId === localPlayer.PlayerId;
 		const deck = isPlayer ? currentState.playerDeck : currentState.opponentDeck;
+		const opponentDeck = !isPlayer ? currentState.playerDeck : currentState.opponentDeck;
 		const card = this.helper.findCardInZone(deck.hand, cardId, entityId);
 
 		const [newHand, removedCard] = this.helper.removeSingleCardFromZone(
@@ -61,7 +62,7 @@ export class CardPlayedFromHandParser implements EventParser {
 				newDeck,
 				cardId,
 				entityId,
-				deck.deckList.length === 0,
+				false, // Only remove known cards
 			);
 			console.debug('[card-played] newDeckAfterReveal', newDeckAfterReveal, newDeck, removedCardFromDeck);
 
@@ -119,7 +120,11 @@ export class CardPlayedFromHandParser implements EventParser {
 		// console.debug('newOtherZone', newOtherZone);
 
 		let newGlobalEffects: readonly DeckCard[] = deck.globalEffects;
-		if (!isCardCountered && globalEffectCards.includes(card?.cardId as CardIds)) {
+		if (
+			!isCardCountered &&
+			globalEffectCards.includes(card?.cardId as CardIds) &&
+			!startOfGameGlobalEffectCards.includes(card?.cardId as CardIds)
+		) {
 			newGlobalEffects = this.helper.addSingleCardToZone(
 				deck.globalEffects,
 				cardWithZone?.update({
@@ -161,18 +166,20 @@ export class CardPlayedFromHandParser implements EventParser {
 			cardId: cardWithZone.cardId,
 			side: isPlayer ? 'player' : 'opponent',
 		};
-		const deckAfterSpecialCaseUpdate: DeckState = isCardCountered
-			? newPlayerDeck
-			: modifyDeckForSpecialCards(cardId, newPlayerDeck, this.allCards, this.i18n).update({
-					cardsPlayedThisMatch: [
-						...newPlayerDeck.cardsPlayedThisMatch,
-						newCardPlayedThisMatch,
-					] as readonly ShortCard[],
-			  });
+		const [playerDeckAfterSpecialCaseUpdate, opponentDeckAfterSpecialCaseUpdate] = isCardCountered
+			? [newPlayerDeck, opponentDeck]
+			: modifyDecksForSpecialCards(cardId, newPlayerDeck, opponentDeck, this.allCards, this.i18n);
+		const finalPlayerDeck = playerDeckAfterSpecialCaseUpdate.update({
+			cardsPlayedThisMatch: [
+				...newPlayerDeck.cardsPlayedThisMatch,
+				newCardPlayedThisMatch,
+			] as readonly ShortCard[],
+		});
 		// console.debug('deckAfterSpecialCaseUpdate', deckAfterSpecialCaseUpdate);
 
 		return currentState.update({
-			[isPlayer ? 'playerDeck' : 'opponentDeck']: deckAfterSpecialCaseUpdate,
+			[isPlayer ? 'playerDeck' : 'opponentDeck']: finalPlayerDeck,
+			[!isPlayer ? 'playerDeck' : 'opponentDeck']: opponentDeckAfterSpecialCaseUpdate,
 			cardsPlayedThisMatch: isCardCountered
 				? currentState.cardsPlayedThisMatch
 				: ([...currentState.cardsPlayedThisMatch, newCardPlayedThisMatch] as readonly ShortCard[]),
