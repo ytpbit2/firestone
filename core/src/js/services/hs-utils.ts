@@ -146,6 +146,7 @@ export const globalEffectCards = [
 	CardIds.Wildfire,
 ];
 
+// Also whitelist in the parser
 export const globalEffectPowers = [CardIds.DewProcess];
 export const globalEffectPowersAlsoOpponent = [CardIds.DewProcess];
 
@@ -249,6 +250,8 @@ export const hideInfoWhenPlayerPlaysIt = [
 	CardIds.MindVisionVanilla,
 	CardIds.PsychicConjurerCore,
 	CardIds.PsychicConjurerLegacy,
+	CardIds.RenosCraftyLasso,
+	CardIds.RenosCraftyLassoTavernBrawl,
 	CardIds.TheotarTheMadDuke,
 ];
 
@@ -303,6 +306,7 @@ export const publicCardGiftCreators = [
 	CardIds.BuildASnowman_BuildASnowbruteToken,
 	CardIds.BuildASnowman_BuildASnowgreToken,
 	CardIds.BumperCar,
+	CardIds.TwistTheCoffers_CacheOfCashToken,
 	CardIds.CallOfTheGrave,
 	CardIds.Castle,
 	CardIds.CastleTavernBrawl,
@@ -502,6 +506,7 @@ export const publicCardGiftCreators = [
 	CardIds.TheCandlesquestion_TheCandlesquestion_DALA_714b,
 	CardIds.TheCountess,
 	CardIds.TheForestsAid_DAL_256,
+	CardIds.TheLichKing_ICC_314,
 	CardIds.TheLobotomizer,
 	CardIds.ThistleTea,
 	CardIds.ThoughtstealLegacy,
@@ -526,6 +531,8 @@ export const publicCardGiftCreators = [
 	CardIds.WitchwoodApple,
 	CardIds.WorthyExpedition,
 	CardIds.YseraTheDreamerCore,
+	CardIds.YseraLegacy,
+	CardIds.YseraVanilla,
 	CardIds.Zaqul_TSC_959,
 	CardIds.Zaqul_Story_11_Zaqul,
 	CardIds.ZephrysTheGreat,

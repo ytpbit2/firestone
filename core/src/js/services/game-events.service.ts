@@ -10,6 +10,7 @@ import { MemoryUpdate } from '../models/memory/memory-update';
 import { DeckParserService } from './decktracker/deck-parser.service';
 import { Events } from './events.service';
 import { GameEventsEmitterService } from './game-events-emitter.service';
+import { HsGameMetaData } from './game-mode-data.service';
 import { GameStatusService } from './game-status.service';
 import { MainWindowStoreService } from './mainwindow/store/main-window-store.service';
 import { GameEventsPluginService } from './plugins/game-events-plugin.service';
@@ -166,7 +167,7 @@ export class GameEvents {
 					Object.assign(new GameEvent(), {
 						type: GameEvent.MATCH_METADATA,
 						additionalData: {
-							metaData: gameEvent.Value?.MetaData ?? {},
+							metaData: (gameEvent.Value?.MetaData ?? {}) as HsGameMetaData,
 							spectating: gameEvent.Value?.Spectating,
 							stats: this.store.state?.stats,
 							state: this.store.state,
@@ -184,36 +185,6 @@ export class GameEvents {
 						localPlayer: localPlayer,
 					} as GameEvent),
 				);
-
-				// Send the info separately and asynchronously, so that we don't block
-				// the main processing loop
-				// This info is not needed by the tracker, but it is needed by some achievements
-				// that rely on the rank
-				setTimeout(async () => {
-					const [matchInfo, playerDeck] = await Promise.all([
-						this.memoryService.getMatchInfo(),
-						this.deckParser.getCurrentDeck(10000),
-					]);
-					console.log('matchInfo', matchInfo);
-					if (!matchInfo?.localPlayer || !matchInfo?.opponent) {
-						console.warn('[game-events] no player info returned by mmindvision', matchInfo);
-						amplitude.getInstance().logEvent('error-logged', {
-							'error-category': 'memory-reading',
-							'error-id': 'no-player-info',
-						});
-					}
-					this.gameEventsEmitter.allEvents.next(
-						Object.assign(new GameEvent(), {
-							type: GameEvent.MATCH_INFO,
-							additionalData: {
-								matchInfo: matchInfo,
-							},
-							localPlayer: {
-								deck: playerDeck,
-							},
-						} as GameEvent),
-					);
-				});
 				break;
 			case 'OPPONENT_PLAYER':
 				console.log(gameEvent.Type + ' event');
