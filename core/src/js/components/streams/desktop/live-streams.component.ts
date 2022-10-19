@@ -1,6 +1,6 @@
 import { AfterContentInit, ChangeDetectionStrategy, ChangeDetectorRef, Component, OnDestroy } from '@angular/core';
 import { PresenceInfo } from '@firestone-hs/twitch-presence';
-import { Observable } from 'rxjs';
+import { BehaviorSubject, Observable } from 'rxjs';
 import { tap } from 'rxjs/operators';
 import { StreamsCategoryType } from '../../../models/mainwindow/streams/streams.type';
 import { LocalizationFacadeService } from '../../../services/localization-facade.service';
@@ -17,13 +17,28 @@ import { AbstractSubscriptionComponent } from '../../abstract-subscription.compo
 	],
 	template: `
 		<div class="streams">
+			<div class="info" [helpTooltip]="'app.streams.info-tooltip' | owTranslate" (click)="toggleInfo()">
+				<svg>
+					<use xlink:href="assets/svg/sprite.svg#info" />
+				</svg>
+			</div>
 			<with-loading [isLoading]="loading$ | async">
-				<ul class="streams-list">
-					<live-stream-info
-						*ngFor="let stream of streams$ | async; trackBy: trackByFn"
-						[stream]="stream"
-					></live-stream-info>
-				</ul>
+				<ng-container *ngIf="{ streams: streams$ | async } as value">
+					<ul class="streams-list" *ngIf="!!value.streams?.length; else emptyState">
+						<live-stream-info
+							*ngFor="let stream of value.streams; trackBy: trackByFn"
+							[stream]="stream"
+						></live-stream-info>
+					</ul>
+					<ng-template #emptyState>
+						<battlegrounds-empty-state
+							class="empty-state"
+							emptyStateIcon="assets/svg/streams.svg"
+							[title]="'app.streams.empty-state-title' | owTranslate"
+							[subtitle]="'app.streams.empty-state-tooltip' | owTranslate"
+						></battlegrounds-empty-state>
+					</ng-template>
+				</ng-container>
 			</with-loading>
 		</div>
 	`,
@@ -34,6 +49,8 @@ export class LiveStreamsComponent extends AbstractSubscriptionComponent implemen
 	loading$: Observable<boolean>;
 
 	private interval;
+
+	private infoToggle$$ = new BehaviorSubject<boolean>(false);
 
 	constructor(
 		protected readonly store: AppUiStoreFacadeService,
@@ -66,6 +83,10 @@ export class LiveStreamsComponent extends AbstractSubscriptionComponent implemen
 
 	getName(categoryId: StreamsCategoryType): string {
 		return this.i18n.translateString(`app.streams.category.${categoryId}`);
+	}
+
+	toggleInfo() {
+		this.infoToggle$$.next(!this.infoToggle$$.value);
 	}
 
 	trackByFn(index: number, item: PresenceInfo) {

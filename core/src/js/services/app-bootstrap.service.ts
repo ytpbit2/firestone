@@ -21,10 +21,13 @@ import { DebugService } from './debug.service';
 import { ArenaRunParserService } from './decktracker/arena-run-parser.service';
 import { ConstructedMetaDecksStateBuilderService } from './decktracker/constructed-meta-decks-state-builder.service';
 import { DeckParserService } from './decktracker/deck-parser.service';
-import { DungeonLootParserService } from './decktracker/dungeon-loot-parser.service';
 import { GameStateService } from './decktracker/game-state.service';
 import { OverlayDisplayService } from './decktracker/overlay-display.service';
 import { DevService } from './dev.service';
+import { DuelsLootParserService } from './duels/duels-loot-parser.service';
+import { DuelsRewardsService } from './duels/duels-rewards.service';
+import { DuelsRunIdService } from './duels/duels-run-id.service';
+import { GameModeDataService } from './game-mode-data.service';
 import { GameStatusService } from './game-status.service';
 import { GameNativeStateStoreService } from './game/game-native-state-store.service';
 import { GlobalStatsNotifierService } from './global-stats/global-stats-notifier.service';
@@ -51,6 +54,7 @@ import { OwUtilsService } from './plugins/ow-utils.service';
 import { PreferencesService } from './preferences.service';
 import { QuestsService } from './quests.service';
 import { ReplaysNotificationService } from './replays/replays-notification.service';
+import { ReviewIdService } from './review-id.service';
 import { RewardMonitorService } from './rewards/rewards-monitor';
 import { SettingsCommunicationService } from './settings/settings-communication.service';
 import { AppUiStoreService } from './ui-store/app-ui-store.service';
@@ -88,7 +92,10 @@ export class AppBootstrapService {
 		private achievementStatsService: RemoteAchievementsService,
 		private collectionManager: CollectionManager,
 		private deckParserService: DeckParserService,
-		private init_dungeonLootParserService: DungeonLootParserService,
+		private init_dungeonLootParserService: DuelsLootParserService,
+		private init_DuelsRewardsService: DuelsRewardsService,
+		private init_DuelsRunIdService: DuelsRunIdService,
+		private init_ReviewIdService: ReviewIdService,
 		private init_arenaRunService: ArenaRunParserService,
 		private gameStateService: GameStateService,
 		private prefs: PreferencesService,
@@ -120,6 +127,7 @@ export class AppBootstrapService {
 		private init_quests: QuestsService,
 		private init_LiveStreamsService: LiveStreamsService,
 		private init_GameNativeStateStoreService: GameNativeStateStoreService,
+		private init_GameModeDataService: GameModeDataService,
 	) {}
 
 	public async init() {

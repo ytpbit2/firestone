@@ -504,7 +504,6 @@ import { ArenaRunParserService } from '../../services/decktracker/arena-run-pars
 import { ConstructedMetaDecksStateBuilderService } from '../../services/decktracker/constructed-meta-decks-state-builder.service';
 import { DeckCardService } from '../../services/decktracker/deck-card.service';
 import { DeckParserService } from '../../services/decktracker/deck-parser.service';
-import { DungeonLootParserService } from '../../services/decktracker/dungeon-loot-parser.service';
 import { DynamicZoneHelperService } from '../../services/decktracker/dynamic-zone-helper.service';
 import { DeckManipulationHelper } from '../../services/decktracker/event-parser/deck-manipulation-helper';
 import { SecretsParserService } from '../../services/decktracker/event-parser/secrets/secrets-parser.service';
@@ -517,9 +516,13 @@ import { OverlayDisplayService } from '../../services/decktracker/overlay-displa
 import { SecretConfigService } from '../../services/decktracker/secret-config.service';
 import { ZoneOrderingService } from '../../services/decktracker/zone-ordering.service';
 import { DevService } from '../../services/dev.service';
+import { DuelsLootParserService } from '../../services/duels/duels-loot-parser.service';
+import { DuelsRewardsService } from '../../services/duels/duels-rewards.service';
+import { DuelsRunIdService } from '../../services/duels/duels-run-id.service';
 import { DuelsStateBuilderService } from '../../services/duels/duels-state-builder.service';
 import { GameEventsEmitterService } from '../../services/game-events-emitter.service';
 import { GameEvents } from '../../services/game-events.service';
+import { GameModeDataService } from '../../services/game-mode-data.service';
 import { GameStatusService } from '../../services/game-status.service';
 import { GameNativeStateStoreService } from '../../services/game/game-native-state-store.service';
 import { GlobalStatsNotifierService } from '../../services/global-stats/global-stats-notifier.service';
@@ -557,6 +560,7 @@ import { SimpleIOService } from '../../services/plugins/simple-io.service';
 import { QuestsService } from '../../services/quests.service';
 import { RealTimeNotificationService } from '../../services/real-time-notifications.service';
 import { ReplaysNotificationService } from '../../services/replays/replays-notification.service';
+import { ReviewIdService } from '../../services/review-id.service';
 import { RewardMonitorService } from '../../services/rewards/rewards-monitor';
 import { S3FileUploadService } from '../../services/s3-file-upload.service';
 import { SettingsCommunicationService } from '../../services/settings/settings-communication.service';
@@ -1159,6 +1163,7 @@ const components = [
 		GameEvents,
 		GameEventsEmitterService,
 		GameEventsPluginService,
+		GameModeDataService,
 		LogListenerService,
 		CardsMonitorService,
 		LogRegisterService,
@@ -1220,7 +1225,10 @@ const components = [
 		OverlayDisplayService,
 		DeckCardService,
 		DeckParserService,
-		DungeonLootParserService,
+		DuelsLootParserService,
+		DuelsRewardsService,
+		DuelsRunIdService,
+		ReviewIdService,
 		ArenaRunParserService,
 		GameStateService,
 		DynamicZoneHelperService,
