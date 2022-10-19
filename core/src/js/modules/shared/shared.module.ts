@@ -7,6 +7,7 @@ import { BrowserModule } from '@angular/platform-browser';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { BattlegroundsMinionsTiersViewOverlayComponent } from '@components/battlegrounds/minions-tiers/battlegrounds-minions-tiers-view.component';
 import { BattlegroundsMinionsGroupComponent } from '@components/battlegrounds/minions-tiers/bgs-minions-group.component';
+import { BattlegroundsMinionsInfoComponent } from '@components/battlegrounds/minions-tiers/bgs-minions-info.component';
 import { BattlegroundsMinionsListComponent } from '@components/battlegrounds/minions-tiers/minions-list.component';
 import { BgsHeroShortRecapComponent } from '@components/battlegrounds/overlay/bgs-hero-short-recap.component';
 import { NumericInputComponent } from '@components/settings/numeric-input.component';
@@ -279,6 +280,7 @@ export function HttpLoaderFactory(http: HttpClient) {
 		BattlegroundsMinionsTiersViewOverlayComponent,
 		BattlegroundsMinionsListComponent,
 		BattlegroundsMinionsGroupComponent,
+		BattlegroundsMinionsInfoComponent,
 
 		BgsBattlesViewComponent,
 		BgsBattleComponent,
@@ -420,6 +422,7 @@ export function HttpLoaderFactory(http: HttpClient) {
 		BattlegroundsMinionsTiersViewOverlayComponent,
 		BattlegroundsMinionsListComponent,
 		BattlegroundsMinionsGroupComponent,
+		BattlegroundsMinionsInfoComponent,
 
 		BgsBattlesViewComponent,
 		BgsBattleComponent,

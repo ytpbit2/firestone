@@ -28,6 +28,7 @@ import { BgsMinionsGroup } from './bgs-minions-group';
 		<div class="bgs-minions-group">
 			<div class="header">
 				<div>{{ title }}</div>
+				<div>{{ this.minions.length }}</div>
 				<div
 					class="highlight-button"
 					[ngClass]="{
@@ -81,6 +82,9 @@ import { BgsMinionsGroup } from './bgs-minions-group';
 	changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class BattlegroundsMinionsGroupComponent implements AfterViewInit {
+	@Input() set totalamount(value: number) {
+		this._totalamount = value;
+	}
 	@Output() minionClick: EventEmitter<string> = new EventEmitter<string>();
 
 	@Input() set group(value: BgsMinionsGroup) {
@@ -105,14 +109,13 @@ export class BattlegroundsMinionsGroupComponent implements AfterViewInit {
 	minions: readonly Minion[] = [];
 	_group: BgsMinionsGroup;
 	_showTribesHighlight: boolean;
-
+	_totalamount: number;
 	highlightTribeOnTooltip: string;
 	highlightTribeOffTooltip: string;
 	highlightMinionOnTooltip: string;
 	highlightMinionOffTooltip: string;
 
 	private _showGoldenCards = true;
-
 	private battlegroundsUpdater: EventEmitter<BattlegroundsStoreEvent>;
 
 	constructor(

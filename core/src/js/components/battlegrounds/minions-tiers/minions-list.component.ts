@@ -31,6 +31,7 @@ import { BgsMinionsGroup } from './bgs-minions-group';
 				[showTribesHighlight]="_showTribesHighlight"
 				[showGoldenCards]="_showGoldenCards"
 			></bgs-minions-group>
+			<bgs-minions-info [cards]="_cards"> </bgs-minions-info>
 			<div class="reset-all-button" (click)="resetHighlights()" *ngIf="_showTribesHighlight">
 				<div class="background-second-part"></div>
 				<div class="background-main-part"></div>
@@ -79,6 +80,7 @@ export class BattlegroundsMinionsListComponent implements AfterViewInit {
 	_showTribesHighlight: boolean;
 	_showGoldenCards: boolean;
 	groups: readonly BgsMinionsGroup[];
+	filters: MinionsFilter[];
 
 	private battlegroundsUpdater: EventEmitter<BattlegroundsStoreEvent>;
 
@@ -112,9 +114,33 @@ export class BattlegroundsMinionsListComponent implements AfterViewInit {
 				highlightedMinions: this._highlightedMinions || [],
 				highlightedTribes: this._highlightedTribes || [],
 			}));
+
+		console.log('debug minion info', this.groups);
 		if (!(this.cdr as ViewRef)?.destroyed) {
 			this.cdr.detectChanges();
 		}
-		// });
+		this.buildFilter();
 	}
+
+	private buildFilter(): MinionsFilter[] {
+		const includes = (targetElement: string) => (arrElement: string) => arrElement.includes(targetElement);
+		const hasMechanism = (card: ReferenceCard, predicate: string) => {
+			if (!card.mechanics) {
+				return false;
+			}
+			return card.mechanics.some(includes(predicate));
+		};
+		return [
+			{ keyword: 'ALL', minions: this._cards },
+			{ keyword: 'BATTLECRY', minions: this._cards.filter((c) => hasMechanism(c, 'BATTLECRY')) },
+			{ keyword: 'DEATH RATTLE', minions: this._cards.filter((c) => hasMechanism(c, 'DEATHRATTLE')) },
+			{ keyword: 'REBORN', minions: this._cards.filter((c) => hasMechanism(c, 'REBORN')) },
+			{ keyword: 'SUMMON', minions: this._cards.filter((c) => hasMechanism(c, 'DEATHRATTLE')) },
+		];
+	}
+}
+
+interface MinionsFilter {
+	readonly keyword: string;
+	readonly minions: readonly ReferenceCard[];
 }

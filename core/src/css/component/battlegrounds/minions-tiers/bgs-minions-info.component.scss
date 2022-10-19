@@ -1,0 +1,27 @@
+:host {
+}
+
+.bgs-minions-info {
+  width: 100%;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  list-style: none;
+  min-height: 0;
+  overflow: visible;
+  position: relative;
+  margin-top: 2px;
+
+  .keyword, .info {
+    background: var(--color-5);
+    color: var(--color-1);
+    width: 100%;
+    font-size: 13px;
+    padding-left: 11px;
+    align-items: center;
+
+    height: 26px;
+    align-items: center;
+    justify-content: left;
+    margin-bottom: 2px;
+  }
+}
