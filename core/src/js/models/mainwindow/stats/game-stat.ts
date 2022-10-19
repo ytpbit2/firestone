@@ -121,7 +121,10 @@ export class GameStat {
 			rankIconTooltip = i18n.translateString(`global.game-mode.${this.gameMode}`);
 		} else if (this.gameMode?.startsWith('mercenaries')) {
 			rankIcon = 'mercenaries';
-			rankIconTooltip = i18n.translateString('global.game-mode.mercenaries');
+			rankIconTooltip =
+				this.gameMode === 'mercenaries-pvp'
+					? i18n.translateString('global.game-mode.mercenaries-pvp')
+					: i18n.translateString('global.game-mode.mercenaries-pve');
 		} else if (this.gameMode === 'practice') {
 			if (GALAKROND_EXPLORER.indexOf(this.scenarioId) !== -1) {
 				rankIcon = 'galakrond_explorers';
@@ -209,14 +212,15 @@ export class GameStat {
 }
 
 export const buildRankText = (playerRank: string, gameMode: string, additionalResult: string): string => {
-	if (
-		(gameMode === 'duels' || gameMode === 'paid-duels') &&
-		additionalResult &&
-		additionalResult.indexOf('-') !== -1
-	) {
-		const [wins, losses] = additionalResult.split('-');
-		if (wins != null && losses != null) {
-			return `${wins}-${losses}`;
+	if (gameMode === 'duels' || gameMode === 'paid-duels') {
+		if (additionalResult && additionalResult.indexOf('-') !== -1) {
+			const [wins, losses] = additionalResult.split('-');
+			if (wins != null && losses != null) {
+				return `${wins}-${losses}`;
+			}
+		}
+		if (!!playerRank) {
+			return `${playerRank}`;
 		}
 		return null;
 	}
