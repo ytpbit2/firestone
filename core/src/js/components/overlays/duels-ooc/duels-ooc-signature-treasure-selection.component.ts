@@ -84,11 +84,11 @@ export class DuelsOutOfCombatSignatureTreasureSelectionComponent
 		const allStats$ = combineLatest(
 			this.signatureTreasures$,
 			selectedHeroPower$,
+			this.store.duelsRuns$(),
 			this.store.listen$(
 				([main, nav]) => main.duels.globalStats?.heroes,
 				([main, nav]) => main.duels.topDecks,
 				([main, nav]) => main.duels.globalStats?.mmrPercentiles,
-				([main, nav]) => main.duels.runs,
 				([main, nav, prefs]) => prefs.duelsActiveTopDecksDustFilter,
 				([main, nav, prefs]) => prefs.duelsActiveMmrFilter,
 				([main, nav, prefs]) => main.duels.currentDuelsMetaPatch,
@@ -99,7 +99,8 @@ export class DuelsOutOfCombatSignatureTreasureSelectionComponent
 				([
 					allSignatureTreasureCards,
 					selectedHeroPower,
-					[duelStats, duelsTopDecks, mmrPercentiles, runs, dustFilter, mmrFilter, patch],
+					runs,
+					[duelStats, duelsTopDecks, mmrPercentiles, dustFilter, mmrFilter, patch],
 				]) => {
 					return allSignatureTreasureCards
 						.map((card) => card.id)
@@ -247,18 +248,24 @@ export class DuelsOutOfCombatSignatureTreasureSelectionComponent
 		);
 	}
 
+	private safeguardTimeout;
+
 	async onMouseEnter(cardId: string) {
-		// this.selectedSignatureTreasureCardId.next(null);
-		// await sleep(100);
+		!!this.safeguardTimeout && clearTimeout(this.safeguardTimeout);
 		console.debug('[duels-ooc-hero-selection] mouseenter', cardId);
 		this.selectedSignatureTreasureCardId.next(cardId);
+		this.safeguardTimeout = setTimeout(() => this.onMouseLeave(null, null), 5000);
 	}
 
 	onMouseLeave(cardId: string, event: MouseEvent) {
-		if (!event.shiftKey) {
+		if (!event?.shiftKey) {
 			console.debug('[duels-ooc-hero-selection] mouseleave', cardId);
 			this.selectedSignatureTreasureCardId.next(null);
 		}
+		!!this.safeguardTimeout && clearTimeout(this.safeguardTimeout);
+		this.safeguardTimeout = null;
+		// !!this.safeguardTimeout && clearTimeout(this.safeguardTimeout);
+		// this.safeguardTimeout = null;
 	}
 
 	trackByFn(index: number, item: ReferenceCard) {

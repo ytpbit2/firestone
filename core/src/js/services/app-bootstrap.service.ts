@@ -22,8 +22,10 @@ import { ArenaRunParserService } from './decktracker/arena-run-parser.service';
 import { ConstructedMetaDecksStateBuilderService } from './decktracker/constructed-meta-decks-state-builder.service';
 import { DeckParserService } from './decktracker/deck-parser.service';
 import { GameStateService } from './decktracker/game-state.service';
+import { DecksProviderService } from './decktracker/main/decks-provider.service';
 import { OverlayDisplayService } from './decktracker/overlay-display.service';
 import { DevService } from './dev.service';
+import { DuelsDecksProviderService } from './duels/duels-decks-provider.service';
 import { DuelsLootParserService } from './duels/duels-loot-parser.service';
 import { DuelsRewardsService } from './duels/duels-rewards.service';
 import { DuelsRunIdService } from './duels/duels-run-id.service';
@@ -57,6 +59,7 @@ import { ReplaysNotificationService } from './replays/replays-notification.servi
 import { ReviewIdService } from './review-id.service';
 import { RewardMonitorService } from './rewards/rewards-monitor';
 import { SettingsCommunicationService } from './settings/settings-communication.service';
+import { GameStatsProviderService } from './stats/game/game-stats-provider.service';
 import { AppUiStoreService } from './ui-store/app-ui-store.service';
 import { sleep } from './utils';
 
@@ -123,11 +126,14 @@ export class AppBootstrapService {
 		private init_OWUtilsService: OwUtilsService,
 		private init_CardsHighlightService: CardsHighlightService,
 		private init_ConstructedMetaDecksStateBuilderService: ConstructedMetaDecksStateBuilderService,
+		private ini_DecksProviderService: DecksProviderService,
 		private init_gameStatus: GameStatusService,
 		private init_quests: QuestsService,
 		private init_LiveStreamsService: LiveStreamsService,
 		private init_GameNativeStateStoreService: GameNativeStateStoreService,
 		private init_GameModeDataService: GameModeDataService,
+		private init_GameStatsProviderService: GameStatsProviderService,
+		private init_DuelsDecksProviderService: DuelsDecksProviderService,
 	) {}
 
 	public async init() {
