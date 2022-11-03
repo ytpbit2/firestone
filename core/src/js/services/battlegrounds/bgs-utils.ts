@@ -49,6 +49,14 @@ export const NON_BUYABLE_MINION_IDS = [
 	CardIds.Tentacular_OzumatsTentacleToken_BG23_HERO_201pt4,
 	CardIds.Tentacular_OzumatsTentacleToken_BG23_HERO_201pt5,
 	CardIds.Tentacular_OzumatsTentacleToken_BG23_HERO_201pt6,
+	// 26.0, same
+	CardIds.EmperorCobraLegacy_BG_EX1_170,
+	CardIds.EmperorCobraLegacy_BG_EX1_170_G,
+	CardIds.EmperorCobraLegacy_EX1_170,
+	CardIds.SnakeLegacyToken,
+	CardIds.SnakeLegacy,
+	CardIds.StoneElemental,
+	CardIds.BolvarFirebloodCore,
 ];
 
 export const getTribeName = (tribe: Race, i18n: LocalizationFacadeService): string =>
@@ -303,6 +311,8 @@ export const getHeroPower = (heroCardId: string, allCards: CardsFacadeService): 
 			return CardIds.SireDenathrius_Whodunitquestion;
 		case CardIds.SylvanasWindrunner_BG23_HERO_306:
 			return CardIds.SylvanasWindrunner_ReclaimedSouls;
+		case CardIds.TheJailerBattlegrounds:
+			return CardIds.RunicEmpowermentBattlegrounds;
 
 		case '':
 			return null; // new heroes
@@ -671,6 +681,8 @@ const getAchievementSectionIdFromHeroCardId = (heroCardId: string, heroName: str
 			return 427;
 		case CardIds.SylvanasWindrunner_BG23_HERO_306:
 			return 431;
+		case CardIds.TheJailerBattlegrounds:
+			return 459;
 		default:
 			if (heroCardId !== CardIds.Diablo) {
 				console.error('missing achievements section for ', heroCardId);

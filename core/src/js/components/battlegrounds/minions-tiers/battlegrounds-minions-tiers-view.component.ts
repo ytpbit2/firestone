@@ -6,7 +6,7 @@ import {
 	ViewEncapsulation,
 	ViewRef,
 } from '@angular/core';
-import { Race, ReferenceCard } from '@firestone-hs/reference-data';
+import { GameTag, Race, ReferenceCard } from '@firestone-hs/reference-data';
 
 @Component({
 	selector: 'battlegrounds-minions-tiers-view',
@@ -37,6 +37,7 @@ import { Race, ReferenceCard } from '@firestone-hs/reference-data';
 									'selected': displayedTier && displayedTier.tavernTier === currentTier.tavernTier,
 									'locked': isLocked(currentTier)
 								}"
+								[helpTooltip]="currentTier.tooltip"
 								(mouseover)="onTavernMouseOver(currentTier)"
 								(click)="onTavernClick(currentTier)"
 							>
@@ -52,10 +53,12 @@ import { Race, ReferenceCard } from '@firestone-hs/reference-data';
 									tier.tavernTier === displayedTier?.tavernTier ||
 									tier.tavernTier === lockedTier?.tavernTier
 							}"
-							[cards]="tier.cards"
+							[tier]="tier"
 							[showTribesHighlight]="showTribesHighlight"
+							[showBattlecryHighlight]="showBattlecryHighlight"
 							[highlightedMinions]="highlightedMinions"
 							[highlightedTribes]="highlightedTribes"
+							[highlightedMechanics]="highlightedMechanics"
 							[showGoldenCards]="showGoldenCards"
 						></bgs-minions-list>
 					</ng-container>
@@ -69,11 +72,14 @@ import { Race, ReferenceCard } from '@firestone-hs/reference-data';
 export class BattlegroundsMinionsTiersViewOverlayComponent {
 	@Input() tiers: readonly Tier[];
 	@Input() highlightedTribes: readonly Race[];
+	@Input() highlightedMechanics: readonly GameTag[];
 	@Input() highlightedMinions: readonly string[];
 	@Input() currentTurn: number;
 	@Input() showTribesHighlight: boolean;
+	@Input() showBattlecryHighlight: boolean;
 	@Input() showMinionsList: boolean;
 	@Input() showTurnNumber: boolean;
+	@Input() showMechanicsTiers: boolean;
 	@Input() enableMouseOver: boolean;
 	@Input() showGoldenCards: boolean;
 
@@ -144,7 +150,9 @@ export class BattlegroundsMinionsTiersViewOverlayComponent {
 	}
 }
 
-interface Tier {
-	tavernTier: number;
+export interface Tier {
+	tavernTier: number | 'B' | 'D';
 	cards: readonly ReferenceCard[];
+	groupingFunction: (card: ReferenceCard) => string;
+	tooltip?: string;
 }

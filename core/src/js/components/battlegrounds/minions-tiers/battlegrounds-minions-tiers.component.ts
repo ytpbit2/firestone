@@ -8,32 +8,37 @@ import {
 	Renderer2,
 	ViewEncapsulation,
 } from '@angular/core';
-import { Race, ReferenceCard } from '@firestone-hs/reference-data';
+import { GameTag, Race, ReferenceCard } from '@firestone-hs/reference-data';
 import { CardsFacadeService } from '@services/cards-facade.service';
-import { Observable } from 'rxjs';
-import { getAllCardsInGame } from '../../../services/battlegrounds/bgs-utils';
+import { combineLatest, Observable } from 'rxjs';
+import { getAllCardsInGame, getEffectiveTribe } from '../../../services/battlegrounds/bgs-utils';
 import { DebugService } from '../../../services/debug.service';
+import { LocalizationFacadeService } from '../../../services/localization-facade.service';
 import { AppUiStoreFacadeService } from '../../../services/ui-store/app-ui-store-facade.service';
 import { groupByFunction } from '../../../services/utils';
 import { AbstractSubscriptionComponent } from '../../abstract-subscription.component';
+import { Tier } from './battlegrounds-minions-tiers-view.component';
 
 @Component({
 	selector: 'battlegrounds-minions-tiers',
 	styleUrls: [
 		'../../../../css/global/components-global.scss',
 		`../../../../css/global/cdk-overlay.scss`,
+		`../../../../css/themes/battlegrounds-theme.scss`,
 		'../../../../css/component/battlegrounds/minions-tiers/battlegrounds-minions-tiers.component.scss',
 	],
 	template: `
-		<div class="battlegrounds-minions-tiers scalable">
+		<div class="battlegrounds-minions-tiers scalable battlegrounds-theme">
 			<battlegrounds-minions-tiers-view
 				[tiers]="tiers$ | async"
 				[currentTurn]="currentTurn$ | async"
 				[tavernTier]="tavernTier$ | async"
 				[showMinionsList]="showMinionsList$ | async"
 				[showTribesHighlight]="showTribesHighlight$ | async"
+				[showBattlecryHighlight]="showBattlecryHighlight$ | async"
 				[highlightedMinions]="highlightedMinions$ | async"
 				[highlightedTribes]="highlightedTribes$ | async"
+				[highlightedMechanics]="highlightedMechanics$ | async"
 				[enableMouseOver]="enableMouseOver$ | async"
 				[showGoldenCards]="showGoldenCards$ | async"
 				[showTurnNumber]="showTurnNumber$ | async"
@@ -50,45 +55,49 @@ export class BattlegroundsMinionsTiersOverlayComponent
 
 	tiers$: Observable<readonly Tier[]>;
 	highlightedTribes$: Observable<readonly Race[]>;
+	highlightedMechanics$: Observable<readonly GameTag[]>;
 	highlightedMinions$: Observable<readonly string[]>;
 	currentTurn$: Observable<number>;
 	tavernTier$: Observable<number>;
 	showTribesHighlight$: Observable<boolean>;
+	showBattlecryHighlight$: Observable<boolean>;
 	showMinionsList$: Observable<boolean>;
 	showTurnNumber$: Observable<boolean>;
 	enableMouseOver$: Observable<boolean>;
 	showGoldenCards$: Observable<boolean>;
 
 	constructor(
+		protected readonly store: AppUiStoreFacadeService,
+		protected readonly cdr: ChangeDetectorRef,
 		private readonly init_DebugService: DebugService,
 		private readonly allCards: CardsFacadeService,
 		private readonly el: ElementRef,
 		private readonly renderer: Renderer2,
-		protected readonly store: AppUiStoreFacadeService,
-		protected readonly cdr: ChangeDetectorRef,
+		private readonly i18n: LocalizationFacadeService,
 	) {
 		super(store, cdr);
 	}
 
 	ngAfterContentInit() {
-		this.tiers$ = this.store
-			.listenBattlegrounds$(([main, prefs]) => main?.currentGame?.availableRaces)
-			.pipe(
-				this.mapData(([races]) => {
-					const cardsInGame = getAllCardsInGame(races, this.allCards);
-					const result = this.buildTiers(cardsInGame);
-					console.debug(
-						'minions list',
-						cardsInGame,
-						result,
-						cardsInGame.filter((c) => c.name?.toLowerCase()?.includes('menace')),
-					);
-					return result;
-				}),
-			);
+		this.tiers$ = combineLatest(
+			this.store.listenPrefs$(
+				(prefs) => prefs.bgsShowMechanicsTiers,
+				(prefs) => prefs.bgsGroupMinionsIntoTheirTribeGroup,
+			),
+			this.store.listenBattlegrounds$(([main, prefs]) => main?.currentGame?.availableRaces),
+		).pipe(
+			this.mapData(([[showMechanicsTiers, bgsGroupMinionsIntoTheirTribeGroup], [races]]) => {
+				const cardsInGame = getAllCardsInGame(races, this.allCards);
+				const result = this.buildTiers(cardsInGame, bgsGroupMinionsIntoTheirTribeGroup, showMechanicsTiers);
+				return result;
+			}),
+		);
 		this.highlightedTribes$ = this.store
 			.listenBattlegrounds$(([main, prefs]) => main.highlightedTribes)
 			.pipe(this.mapData(([tribes]) => tribes));
+		this.highlightedMechanics$ = this.store
+			.listenBattlegrounds$(([main, prefs]) => main.highlightedMechanics)
+			.pipe(this.mapData(([highlightedMechanics]) => highlightedMechanics));
 		this.highlightedMinions$ = this.store
 			.listenBattlegrounds$(([main, prefs]) => main.highlightedMinions)
 			.pipe(this.mapData(([tribes]) => tribes));
@@ -99,6 +108,7 @@ export class BattlegroundsMinionsTiersOverlayComponent
 			.listenBattlegrounds$(([main, prefs]) => main.currentGame?.getMainPlayer()?.getCurrentTavernTier())
 			.pipe(this.mapData(([tavernTier]) => tavernTier));
 		this.showTribesHighlight$ = this.listenForBasicPref$((prefs) => prefs.bgsShowTribesHighlight);
+		this.showBattlecryHighlight$ = this.listenForBasicPref$((prefs) => prefs.bgsShowMechanicsHighlight);
 		this.showMinionsList$ = this.listenForBasicPref$((prefs) => prefs.bgsEnableMinionListOverlay);
 		this.showTurnNumber$ = this.listenForBasicPref$((prefs) => prefs.bgsEnableTurnNumbertOverlay);
 		this.enableMouseOver$ = this.listenForBasicPref$((prefs) => prefs.bgsEnableMinionListMouseOver);
@@ -110,7 +120,11 @@ export class BattlegroundsMinionsTiersOverlayComponent
 		});
 	}
 
-	private buildTiers(cardsInGame: readonly ReferenceCard[]): readonly Tier[] {
+	private buildTiers(
+		cardsInGame: readonly ReferenceCard[],
+		groupMinionsIntoTheirTribeGroup: boolean,
+		showMechanicsTiers: boolean,
+	): readonly Tier[] {
 		if (!cardsInGame?.length) {
 			return [];
 		}
@@ -118,14 +132,33 @@ export class BattlegroundsMinionsTiersOverlayComponent
 		const groupedByTier: { [tierLevel: string]: readonly ReferenceCard[] } = groupByFunction(
 			(card: ReferenceCard) => '' + card.techLevel,
 		)(cardsInGame);
-		return Object.keys(groupedByTier).map((tierLevel) => ({
+		const standardTiers: readonly Tier[] = Object.keys(groupedByTier).map((tierLevel) => ({
 			tavernTier: parseInt(tierLevel),
 			cards: groupedByTier[tierLevel],
+			groupingFunction: (card: ReferenceCard) => getEffectiveTribe(card, groupMinionsIntoTheirTribeGroup),
 		}));
+		const mechanicsTiers = showMechanicsTiers ? this.buildMechanicsTiers(cardsInGame) : [];
+		return [...standardTiers, ...mechanicsTiers];
 	}
-}
 
-interface Tier {
-	tavernTier: number;
-	cards: readonly ReferenceCard[];
+	private buildMechanicsTiers(cardsInGame: readonly ReferenceCard[]): readonly Tier[] {
+		return [
+			{
+				tavernTier: 'B',
+				cards: cardsInGame.filter((c) => c.mechanics?.includes(GameTag[GameTag.BATTLECRY])),
+				groupingFunction: (card: ReferenceCard) => '' + card.techLevel,
+				tooltip: this.i18n.translateString('battlegrounds.in-game.minions-list.mechanics-tier-tooltip', {
+					value: this.i18n.translateString(`global.mechanics.${GameTag[GameTag.BATTLECRY].toLowerCase()}`),
+				}),
+			},
+			{
+				tavernTier: 'D',
+				cards: cardsInGame.filter((c) => c.mechanics?.includes(GameTag[GameTag.DEATHRATTLE])),
+				groupingFunction: (card: ReferenceCard) => '' + card.techLevel,
+				tooltip: this.i18n.translateString('battlegrounds.in-game.minions-list.mechanics-tier-tooltip', {
+					value: this.i18n.translateString(`global.mechanics.${GameTag[GameTag.DEATHRATTLE].toLowerCase()}`),
+				}),
+			},
+		];
+	}
 }

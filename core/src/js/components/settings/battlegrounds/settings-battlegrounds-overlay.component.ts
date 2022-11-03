@@ -157,12 +157,36 @@ import { Knob } from '../preference-slider.component';
 					[valueToDisplayMessageOn]="false"
 				></preference-toggle>
 				<preference-toggle
+					field="bgsGroupMinionsIntoTheirTribeGroup"
+					[ngClass]="{ 'disabled': !value.bgsFullToggle || !value.bgsEnableMinionListOverlay }"
+					[label]="
+						'settings.battlegrounds.overlay.minions-list-group-minions-into-tribes-label' | owTranslate
+					"
+					[tooltip]="
+						'settings.battlegrounds.overlay.minions-list-group-minions-into-tribes-tooltip' | owTranslate
+					"
+				></preference-toggle>
+				<preference-toggle
 					field="bgsShowTribesHighlight"
 					[ngClass]="{ 'disabled': !value.bgsFullToggle || !value.bgsEnableMinionListOverlay }"
 					[label]="'settings.battlegrounds.overlay.minions-list-show-tribes-highlight-label' | owTranslate"
 					[tooltip]="
 						'settings.battlegrounds.overlay.minions-list-show-tribes-highlight-tooltip' | owTranslate
 					"
+				></preference-toggle>
+				<preference-toggle
+					field="bgsShowMechanicsHighlight"
+					[ngClass]="{ 'disabled': !value.bgsFullToggle || !value.bgsEnableMinionListOverlay }"
+					[label]="'settings.battlegrounds.overlay.minions-list-show-mechanics-highlight-label' | owTranslate"
+					[tooltip]="
+						'settings.battlegrounds.overlay.minions-list-show-mechanics-highlight-tooltip' | owTranslate
+					"
+				></preference-toggle>
+				<preference-toggle
+					field="bgsShowMechanicsTiers"
+					[ngClass]="{ 'disabled': !value.bgsFullToggle || !value.bgsEnableMinionListOverlay }"
+					[label]="'settings.battlegrounds.overlay.minions-list-show-mechanics-tiers-label' | owTranslate"
+					[tooltip]="'settings.battlegrounds.overlay.minions-list-show-mechanics-tiers-tooltip' | owTranslate"
 				></preference-toggle>
 				<preference-toggle
 					field="bgsMinionListShowGoldenCard"

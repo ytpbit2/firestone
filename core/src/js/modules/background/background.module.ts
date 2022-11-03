@@ -209,7 +209,6 @@ import {
 import { DecktrackerLadderStatsMatchupsComponent } from '../../components/decktracker/main/decktracker-ladder-stats-matchups.component';
 import { DecktrackerLadderStatsOverviewComponent } from '../../components/decktracker/main/decktracker-ladder-stats-overview.component';
 import { DecktrackerLadderStatsComponent } from '../../components/decktracker/main/decktracker-ladder-stats.component';
-import { DecktrackerPersonalStatsRankingComponent } from '../../components/decktracker/main/decktracker-personal-stats-ranking.component';
 import { DecktrackerRatingGraphComponent } from '../../components/decktracker/main/decktracker-rating-graph.component';
 import { DecktrackerReplaysRecapComponent } from '../../components/decktracker/main/decktracker-replays-recap.component';
 import { DecktrackerStatsForReplaysComponent } from '../../components/decktracker/main/decktracker-stats-for-replays.component';
@@ -368,6 +367,7 @@ import { PlayerMonstrousParrotWidgetWrapperComponent } from '../../components/ov
 import { PlayerMulticasterWidgetWrapperComponent } from '../../components/overlays/counters/player-multicaster-widget-wrapper.component';
 import { PlayerMurozondTheInfiniteWidgetWrapperComponent } from '../../components/overlays/counters/player-murozond-widget-wrapper.component';
 import { PlayerPogoWidgetWrapperComponent } from '../../components/overlays/counters/player-pogo-widget-wrapper.component';
+import { PlayerQueensguardWidgetWrapperComponent } from '../../components/overlays/counters/player-queensguard-widget-wrapper.component';
 import { PlayerRelicWidgetWrapperComponent } from '../../components/overlays/counters/player-relic-widget-wrapper.component';
 import { PlayerSpellWidgetWrapperComponent } from '../../components/overlays/counters/player-spell-widget-wrapper.component';
 import { PlayerVanessaVanCleefWidgetWrapperComponent } from '../../components/overlays/counters/player-vanessa-widget-wrapper.component';
@@ -382,6 +382,7 @@ import { MercsActionQueueWidgetWrapperComponent } from '../../components/overlay
 import { MercsOpponentTeamWidgetWrapperComponent } from '../../components/overlays/mercs-opponent-team-widget-wrapper.component';
 import { MercsOutOfCombatPlayerTeamWidgetWrapperComponent } from '../../components/overlays/mercs-out-of-combat-player-team-widget-wrapper.component';
 import { MercsPlayerTeamWidgetWrapperComponent } from '../../components/overlays/mercs-player-team-widget-wrapper.component';
+import { MercsQuestsWidgetWrapperComponent } from '../../components/overlays/mercs-quests-widget-wrapper.component';
 import { MercsTreasureSelectionWidgetWrapperComponent } from '../../components/overlays/mercs-treasure-selection-widget-wrapper.component';
 import { OpponentHandWidgetWrapperComponent } from '../../components/overlays/opponent-hand-widget-wrapper.component';
 import { OpponentCardInfoIdComponent } from '../../components/overlays/opponenthand/opponent-card-info-id.component';
@@ -391,6 +392,7 @@ import { OpponentCardTurnNumberComponent } from '../../components/overlays/oppon
 import { OpponentHandOverlayComponent } from '../../components/overlays/opponenthand/opponent-hand-overlay.component';
 import { BgsQuestsWidgetComponent } from '../../components/overlays/quests/bgs-quests-widget.component';
 import { HsQuestsWidgetComponent } from '../../components/overlays/quests/hs-quests-widget.component';
+import { MercsQuestsWidgetComponent } from '../../components/overlays/quests/mercs-quests-widget.component';
 import {
 	HsQuestsListWidgetComponent,
 	QuestsWidgetViewComponent,
@@ -403,6 +405,7 @@ import {
 } from '../../components/overlays/turntimer/turn-timer-widget.component';
 import { FullScreenOverlaysClickthroughComponent } from '../../components/overlays/_full-screen-overlays-clickthrough.component';
 import { FullScreenOverlaysComponent } from '../../components/overlays/_full-screen-overlays.component';
+import { RegionFilterDropdownComponent } from '../../components/replays/filters/region-filter-dropdown.component';
 import { ReplaysBgHeroFilterDropdownComponent } from '../../components/replays/filters/replays-bg-hero-filter-dropdown.component';
 import { ReplaysDeckstringFilterDropdownComponent } from '../../components/replays/filters/replays-deckstring-filter-dropdown.component';
 import { ReplaysGameModeFilterDropdownComponent } from '../../components/replays/filters/replays-game-mode-filter-dropdown.component';
@@ -509,13 +512,14 @@ import { DeckManipulationHelper } from '../../services/decktracker/event-parser/
 import { SecretsParserService } from '../../services/decktracker/event-parser/secrets/secrets-parser.service';
 import { GameStateMetaInfoService } from '../../services/decktracker/game-state-meta-info.service';
 import { GameStateService } from '../../services/decktracker/game-state.service';
-import { DecksStateBuilderService } from '../../services/decktracker/main/decks-state-builder.service';
+import { DecksProviderService } from '../../services/decktracker/main/decks-provider.service';
 import { DecktrackerStateLoaderService } from '../../services/decktracker/main/decktracker-state-loader.service';
 import { ReplaysStateBuilderService } from '../../services/decktracker/main/replays-state-builder.service';
 import { OverlayDisplayService } from '../../services/decktracker/overlay-display.service';
 import { SecretConfigService } from '../../services/decktracker/secret-config.service';
 import { ZoneOrderingService } from '../../services/decktracker/zone-ordering.service';
 import { DevService } from '../../services/dev.service';
+import { DuelsDecksProviderService } from '../../services/duels/duels-decks-provider.service';
 import { DuelsLootParserService } from '../../services/duels/duels-loot-parser.service';
 import { DuelsRewardsService } from '../../services/duels/duels-rewards.service';
 import { DuelsRunIdService } from '../../services/duels/duels-run-id.service';
@@ -565,6 +569,7 @@ import { RewardMonitorService } from '../../services/rewards/rewards-monitor';
 import { S3FileUploadService } from '../../services/s3-file-upload.service';
 import { SettingsCommunicationService } from '../../services/settings/settings-communication.service';
 import { GameStatsLoaderService } from '../../services/stats/game/game-stats-loader.service';
+import { GameStatsProviderService } from '../../services/stats/game/game-stats-provider.service';
 import { GameStatsUpdaterService } from '../../services/stats/game/game-stats-updater.service';
 import { StatsStateBuilderService } from '../../services/stats/stats-state-builder.service';
 import { TipService } from '../../services/tip.service';
@@ -591,6 +596,7 @@ overwolf.settings.getExtensionSettings((settings) => {
 		release: process.env.APP_VERSION,
 		attachStacktrace: true,
 		sampleRate: sampleRate,
+		normalizeDepth: 6,
 		integrations: [
 			new Integrations.GlobalHandlers({
 				onerror: true,
@@ -781,7 +787,6 @@ const components = [
 		DeckManaCurveComponent,
 		DeckManaCurveBarComponent,
 		DecktrackerReplaysRecapComponent,
-		DecktrackerPersonalStatsRankingComponent,
 		DecktrackerLadderStatsComponent,
 		DecktrackerLadderStatsOverviewComponent,
 		DecktrackerLadderStatsMatchupsComponent,
@@ -827,6 +832,7 @@ const components = [
 		ReplaysBgHeroFilterDropdownComponent,
 		ReplaysPlayerClassFilterDropdownComponent,
 		ReplaysOpponentClassFilterDropdownComponent,
+		RegionFilterDropdownComponent,
 
 		BattlegroundsDesktopComponent,
 		BattlegroundsCategoryDetailsComponent,
@@ -986,6 +992,8 @@ const components = [
 		HsQuestsWidgetWrapperComponent,
 		BgsQuestsWidgetComponent,
 		BgsQuestsWidgetWrapperComponent,
+		MercsQuestsWidgetComponent,
+		MercsQuestsWidgetWrapperComponent,
 		ChoosingCardWidgetWrapperComponent,
 		ChoosingCardOptionComponent,
 
@@ -1042,6 +1050,7 @@ const components = [
 		PlayerMonstrousParrotWidgetWrapperComponent,
 		PlayerVanessaVanCleefWidgetWrapperComponent,
 		PlayerMurozondTheInfiniteWidgetWrapperComponent,
+		PlayerQueensguardWidgetWrapperComponent,
 		PlayerLadyDarkveinWidgetWrapperComponent,
 		PlayerGreySageParrotWidgetWrapperComponent,
 		PlayerMulticasterWidgetWrapperComponent,
@@ -1185,7 +1194,7 @@ const components = [
 		AchievementUpdateHelper,
 
 		DecktrackerStateLoaderService,
-		DecksStateBuilderService,
+		DecksProviderService,
 		ReplaysStateBuilderService,
 		ConstructedMetaDecksStateBuilderService,
 
@@ -1221,6 +1230,7 @@ const components = [
 
 		GameStatsLoaderService,
 		GameStatsUpdaterService,
+		GameStatsProviderService,
 
 		OverlayDisplayService,
 		DeckCardService,
@@ -1228,6 +1238,7 @@ const components = [
 		DuelsLootParserService,
 		DuelsRewardsService,
 		DuelsRunIdService,
+		DuelsDecksProviderService,
 		ReviewIdService,
 		ArenaRunParserService,
 		GameStateService,

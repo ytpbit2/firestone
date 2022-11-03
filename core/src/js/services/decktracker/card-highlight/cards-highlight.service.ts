@@ -14,6 +14,7 @@ import { AppUiStoreFacadeService } from '../../ui-store/app-ui-store-facade.serv
 import {
 	and,
 	arcane,
+	attackLessThan,
 	baseCostEqual,
 	battlecry,
 	beast,
@@ -49,6 +50,7 @@ import {
 	inHand,
 	inOther,
 	legendary,
+	lifesteal,
 	magnetic,
 	mech,
 	minion,
@@ -169,6 +171,38 @@ export class CardsHighlightService extends AbstractSubscriptionService {
 					handler.highlightCallback();
 				});
 		}
+	}
+
+	getHighlightedCards(cardId: string, side: 'player' | 'opponent' | 'duels', card?: DeckCard): readonly Handler[] {
+		// Happens when using the deck-list component outside of a game
+		if (!this.options?.skipGameState && !this.gameState) {
+			console.debug('skipping game state', this.options, this.gameState);
+			return [];
+		}
+
+		const selector: (
+			handler: Handler,
+			deckState?: DeckState,
+			options?: SelectorOptions,
+			gameState?: GameState,
+		) => boolean = this.buildSelector(cardId, card);
+		console.debug('selector', selector);
+		const result = !!selector
+			? Object.keys(this.handlers)
+					.filter((key) => key.startsWith(side))
+					.map((key) => this.handlers[key])
+					.filter((handler) => {
+						return selector(
+							handler,
+							side === 'player' ? this.gameState?.playerDeck : this.gameState?.opponentDeck,
+							this.options,
+							this.gameState,
+						);
+					})
+					.map((handler) => handler)
+			: [];
+		console.debug('result', result);
+		return result;
 	}
 
 	onMouseLeave(cardId: string) {
@@ -307,10 +341,14 @@ export class CardsHighlightService extends AbstractSubscriptionService {
 				return and(inDeck, minion);
 			case CardIds.CorruptedFelstoneTavernBrawl:
 				return and(or(inDeck, inHand), spell, fel);
+			case CardIds.CountessAshmore:
+				return and(inDeck, or(rush, lifesteal, deathrattle));
 			case CardIds.CowardlyGrunt:
 				return and(inDeck, minion);
 			case CardIds.CrushclawEnforcer:
 				return and(inDeck, naga);
+			case CardIds.Crystology:
+				return and(inDeck, minion, attackLessThan(2));
 			case CardIds.CutlassCourier:
 				return and(inDeck, pirate);
 			case CardIds.DarkInquisitorXanesh:
@@ -465,6 +503,8 @@ export class CardsHighlightService extends AbstractSubscriptionService {
 				return and(minion, inGraveyard, deathrattle);
 			case CardIds.K90tron:
 				return and(inDeck, minion, effectiveCostEqual(1));
+			case CardIds.KangorsEndlessArmy:
+				return and(inGraveyard, mech);
 			case CardIds.KanrethadEbonlocke_KanrethadPrimeToken:
 				return and(demon, inGraveyard, minion);
 			case CardIds.Kazakusan_ONY_005:

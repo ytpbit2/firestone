@@ -1,5 +1,5 @@
 import { FormatForDeckData, RankForDeckData, TimeForDeckData } from '@firestone-hs/deck-stats';
-import { allDuelsHeroes, Race } from '@firestone-hs/reference-data';
+import { allDuelsHeroes, BnetRegion, Race } from '@firestone-hs/reference-data';
 import { DuelsDeckSummary } from '@models/duels/duels-personal-deck';
 import 'reflect-metadata';
 import { OutOfCardsToken } from '../services/mainwindow/out-of-cards.service';
@@ -76,6 +76,7 @@ export class Preferences {
 	readonly showQuestsWidgetWhenEmpty: boolean = false;
 	readonly showQuestsInGame: boolean = true;
 	readonly useStreamerMode: boolean = false;
+	readonly regionFilter: BnetRegion | 'all' = 'all';
 
 	readonly advancedModeToggledOn: boolean;
 
@@ -181,6 +182,10 @@ export class Preferences {
 	readonly bgsShowQuestsWidget: boolean = true;
 	@Reflect.metadata(FORCE_LOCAL_PROP, true)
 	readonly bgsQuestsWidgetPosition: { left: number; top: number };
+
+	readonly mercsShowQuestsWidget: boolean = true;
+	@Reflect.metadata(FORCE_LOCAL_PROP, true)
+	readonly mercsQuestsWidgetPosition: { left: number; top: number };
 
 	readonly guessOpponentArchetype: boolean = true;
 
@@ -375,6 +380,10 @@ export class Preferences {
 	@Reflect.metadata(FORCE_LOCAL_PROP, true)
 	readonly playerMurozondTheInfiniteCounterWidgetPosition: { left: number; top: number };
 
+	readonly playerQueensguardCounter: boolean = true;
+	@Reflect.metadata(FORCE_LOCAL_PROP, true)
+	readonly playerQueensguardCounterWidgetPosition: { left: number; top: number };
+
 	readonly playerLadyDarkveinCounter: boolean = true;
 	@Reflect.metadata(FORCE_LOCAL_PROP, true)
 	readonly playerLadyDarkveinCounterWidgetPosition: { left: number; top: number };
@@ -446,6 +455,9 @@ export class Preferences {
 	readonly bgsMinionsListPosition: { left: number; top: number };
 	readonly bgsEnableMinionListMouseOver: boolean = true;
 	readonly bgsShowTribesHighlight: boolean = true;
+	readonly bgsShowMechanicsHighlight: boolean = true;
+	readonly bgsShowMechanicsTiers: boolean = true;
+	readonly bgsGroupMinionsIntoTheirTribeGroup: boolean = false;
 	readonly bgsMinionListShowGoldenCard: boolean = true;
 	readonly bgsShowLastOpponentIconInOverlay: boolean = true;
 	readonly bgsShowHeroSelectionScreen: boolean = true;

@@ -37,6 +37,7 @@ import { Ability } from './mercenaries-team-ability.component';
 				*ngFor="let ability of abilities"
 				[ability]="ability"
 				[tooltipPosition]="tooltipPosition"
+				[enableHighlight]="enableHighlight"
 				[uncapacitated]="isDead || isBench"
 			></mercenaries-team-ability>
 			<mercenaries-team-ability
@@ -44,6 +45,7 @@ import { Ability } from './mercenaries-team-ability.component';
 				class="equipment"
 				[ability]="equipment"
 				[tooltipPosition]="tooltipPosition"
+				[enableHighlight]="enableHighlight"
 				[uncapacitated]="isDead || isBench"
 			></mercenaries-team-ability>
 		</div>
@@ -52,14 +54,15 @@ import { Ability } from './mercenaries-team-ability.component';
 })
 export class MercenariesTeamMercenaryComponent {
 	@Input() tooltipPosition: boolean;
+	@Input() enableHighlight: boolean;
 
 	@Input() set mercenary(value: BattleMercenary) {
 		const refMercenaryCard = this.allCards.getCard(value.cardId);
 		this.mercCardId = value.cardId;
 		this.cardImage = `url(https://static.zerotoheroes.com/hearthstone/cardart/tiles/${value.cardId}.jpg)`;
 		this.roleIcon =
-			!value.role || value.role === TagRole[TagRole.NEUTRAL] || value.role === TagRole[TagRole.INVALID]
-				? null
+			!value.role || value.role === TagRole[TagRole.INVALID]
+				? `https://static.zerotoheroes.com/hearthstone/asset/firestone/mercenaries_icon_golden_neutral.png`
 				: `https://static.zerotoheroes.com/hearthstone/asset/firestone/mercenaries_icon_golden_${value.role?.toLowerCase()}.png`;
 		this.name = value.cardId
 			? refMercenaryCard.name ?? this.i18n.translateString('mercenaries.team-widget.unrecognized-mercenary')

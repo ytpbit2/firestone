@@ -14,7 +14,7 @@ import { encodeMercs, MercenariesTeamDefinition, MercenaryDefinition } from '@fi
 import { VillageVisitorType } from '@firestone-hs/reference-data';
 import { MercenariesReferenceData } from '@firestone-hs/trigger-process-mercenaries-review/dist/process-mercenaries-review';
 import { BehaviorSubject, combineLatest, Observable, Subscription } from 'rxjs';
-import { debounceTime, filter, map, takeUntil } from 'rxjs/operators';
+import { debounceTime, filter, map, takeUntil, tap } from 'rxjs/operators';
 import { CardTooltipPositionType } from '../../../../directives/card-tooltip-position.type';
 import { MemoryMercenariesCollectionInfo } from '../../../../models/memory/memory-mercenaries-collection-info';
 import { MercenariesBattleTeam } from '../../../../models/mercenaries/mercenaries-battle-state';
@@ -57,14 +57,22 @@ import { AbstractSubscriptionComponent } from '../../../abstract-subscription.co
 									{{ currentBattleTurn$ | async }}
 								</div>
 							</div>
-							<div class="element map-turn" [helpTooltip]="mapTurnsTooltip$ | async">
+							<div
+								class="element map-turn"
+								[helpTooltip]="mapTurnsTooltip$ | async"
+								*ngIf="showMapTurnCounter$ | async"
+							>
 								<div class="icon" inlineSVG="assets/svg/map.svg"></div>
 								<div class="value ">
 									{{ totalMapTurns$ | async }}
 								</div>
 							</div>
 						</div>
-						<mercenaries-team-list [team]="_team" [tooltipPosition]="tooltipPosition">
+						<mercenaries-team-list
+							[team]="_team"
+							[tooltipPosition]="tooltipPosition"
+							[enableHighlight]="side !== 'opponent'"
+						>
 						</mercenaries-team-list>
 						<div class="footer">
 							<div
@@ -149,6 +157,7 @@ export class MercenariesTeamRootComponent extends AbstractSubscriptionComponent 
 	showTaskList$: Observable<boolean>;
 	showRolesChart$: Observable<boolean>;
 	showTurnCounter$: Observable<boolean>;
+	showMapTurnCounter$: Observable<boolean>;
 	currentBattleTurn$: Observable<number>;
 	totalMapTurns$: Observable<string>;
 	mapTurnsTooltip$: Observable<string>;
@@ -188,7 +197,7 @@ export class MercenariesTeamRootComponent extends AbstractSubscriptionComponent 
 			this.tasks$$.asObservable(),
 		).pipe(
 			this.mapData(([[refData, collectionInfo], [mercBackupIds], tasks]) =>
-				this.buildTeamForTasks(tasks, refData, collectionInfo, mercBackupIds),
+				buildTeamForTasks(tasks, refData, collectionInfo, mercBackupIds, this.allCards, this.i18n),
 			),
 		);
 		this.taskTeamDeckstring$.pipe(this.mapData((info) => info)).subscribe((info) => this.updateTaskListBottom());
@@ -215,14 +224,26 @@ export class MercenariesTeamRootComponent extends AbstractSubscriptionComponent 
 			});
 		this.showTasks$ = combineLatest(
 			this.store.listenMercenaries$(([battleState, prefs]) => battleState?.gameMode),
-			this.store.listenPrefs$((prefs) => (this.showTasksExtractor ? this.showTasksExtractor(prefs) : null)),
+			this.store.listenPrefs$(
+				(prefs) => (this.showTasksExtractor ? this.showTasksExtractor(prefs) : null),
+				(prefs) => prefs.mercsShowQuestsWidget,
+			),
 		).pipe(
 			// Because when out of combat
-			this.mapData(([[gameMode], [pref]]) => pref && !isMercenariesPvP(gameMode)),
+			this.mapData(
+				([[gameMode], [pref, mercsShowQuestsWidget]]) =>
+					!mercsShowQuestsWidget && pref && !isMercenariesPvP(gameMode),
+			),
 		);
 		this.showTaskList$ = this.showTaskList$$.asObservable().pipe(this.mapData((info) => info));
 		this.showRolesChart$ = this.showRolesChart$$.asObservable().pipe(this.mapData((info) => info));
 		this.showTurnCounter$ = this.showTurnCounter$$.asObservable().pipe(this.mapData((info) => info));
+		this.showMapTurnCounter$ = this.store
+			.listenMercenaries$(([state]) => state?.gameMode)
+			.pipe(
+				tap((info) => console.debug('[merc] info', info)),
+				this.mapData(([gameMode]) => !isMercenariesPvP(gameMode)),
+			);
 		this.currentBattleTurn$ = this.store
 			.listenMercenaries$(([state, prefs]) => state?.currentTurn)
 			.pipe(
@@ -304,85 +325,6 @@ export class MercenariesTeamRootComponent extends AbstractSubscriptionComponent 
 	hideRolesChart() {
 		this.showRolesChart$$.next(false);
 	}
-
-	private buildTeamForTasks(
-		tasks: readonly Task[],
-		mercReferenceData: MercenariesReferenceData,
-		mercCollectionInfo: MemoryMercenariesCollectionInfo,
-		backupMercIds: readonly number[],
-	): string {
-		// console.debug('building team for tasks', tasks, mercReferenceData);
-		if (!mercReferenceData?.mercenaries?.length || !tasks?.length) {
-			console.warn('missing reference data');
-			return null;
-		}
-
-		const taskMercs = tasks
-			.filter((task) => task.type === VillageVisitorType.STANDARD)
-			.map((task) => this.allCards.getCard(task.mercenaryCardId)?.dbfId)
-			.map((mercDbfId) =>
-				this.buildMerc(
-					mercReferenceData.mercenaries.find((merc) => merc.cardDbfId === mercDbfId),
-					mercCollectionInfo,
-				),
-			)
-			.filter((m) => !!m);
-		const backupMercs = [...new Array(6 - (taskMercs?.length ?? 0)).keys()]
-			.map((_, i) => backupMercIds[i])
-			.filter((id) => !!id)
-			.map((backupId) =>
-				this.buildMerc(
-					mercReferenceData.mercenaries.find((merc) => merc.id === backupId),
-					mercCollectionInfo,
-				),
-			)
-			.filter((m) => !!m);
-		const finalMercs = [...taskMercs, ...backupMercs];
-		// console.debug('final mercs', finalMercs, taskMercs, backupMercs, backupMercIds);
-
-		const definition: MercenariesTeamDefinition = {
-			teamId: 1,
-			type: 1,
-			name: this.i18n.translateString('mercenaries.team-widget.task-team-default-name'),
-			mercenaries: finalMercs,
-		};
-		if (!definition?.mercenaries?.length) {
-			return null;
-		}
-
-		const deckstring = encodeMercs(definition);
-		// console.debug('mercs definition', deckstring, definition);
-		return deckstring;
-	}
-
-	private buildMerc(
-		refMerc: MercenariesReferenceData['mercenaries'][0],
-		mercCollectionInfo: MemoryMercenariesCollectionInfo,
-	): MercenaryDefinition {
-		if (!refMerc) {
-			return null;
-		}
-
-		const memMerc = mercCollectionInfo?.Mercenaries?.find((m) => m.Id === refMerc.id);
-		const equipmentId =
-			memMerc?.Loadout?.Equipment?.Id ??
-			(memMerc?.Equipments ?? []).find((e) => e.Equipped)?.Id ??
-			[...(memMerc?.Equipments ?? [])].sort((a, b) => b.Tier - a.Tier)[0]?.Id ??
-			refMerc.equipments[0]?.equipmentId;
-		const artVariationId = memMerc?.Loadout?.ArtVariation?.Id ?? memMerc.Skins.find((s) => s.Default)?.Id ?? 0;
-		const artVariationPremium =
-			memMerc?.Loadout?.ArtVariationPremium ?? memMerc.Skins.find((s) => s.Default)?.Id ?? 0;
-		const result: MercenaryDefinition = {
-			mercenaryId: refMerc.id,
-			selectedArtVariationId: artVariationId,
-			selectedArtVariationPremium: artVariationPremium,
-			selectedEquipmentId: equipmentId,
-			sharedTeamMercenaryIsFullyUpgraded: 0,
-			sharedTeamMercenaryXp: 0,
-		};
-		// console.debug('merc for tasks', result);
-		return result;
-	}
 }
 
 @Component({
@@ -391,6 +333,7 @@ export class MercenariesTeamRootComponent extends AbstractSubscriptionComponent 
 		'../../../../../css/global/components-global.scss',
 		`../../../../../css/themes/decktracker-theme.scss`,
 		'../../../../../css/component/mercenaries/overlay/teams/mercenaries-team-root.component.scss',
+		'../../../../../css/component/mercenaries/overlay/teams/tasks-list.scss',
 	],
 	template: `
 		<div class="tasks-container">
@@ -410,7 +353,7 @@ export class MercenariesTeamRootComponent extends AbstractSubscriptionComponent 
 						</div>
 					</div>
 				</div>
-				<div class="create-team-button" *ngIf="taskTeamDeckstring">
+				<!-- <div class="create-team-button" *ngIf="taskTeamDeckstring">
 					<button
 						[helpTooltip]="buttonTooltip"
 						(click)="createTeamFromTasks()"
@@ -418,7 +361,7 @@ export class MercenariesTeamRootComponent extends AbstractSubscriptionComponent 
 					>
 						{{ buttonLabel }}
 					</button>
-				</div>
+				</div> -->
 			</ng-container>
 			<ng-template #emptyState
 				><div class="empty-state" [owTranslate]="'mercenaries.team-widget.tasks-completed'"></div>
@@ -475,3 +418,83 @@ export interface Task {
 	readonly frameUrl?: string;
 	readonly type: VillageVisitorType;
 }
+
+export const buildTeamForTasks = (
+	tasks: readonly Task[],
+	mercReferenceData: MercenariesReferenceData,
+	mercCollectionInfo: MemoryMercenariesCollectionInfo,
+	backupMercIds: readonly number[],
+	allCards: CardsFacadeService,
+	i18n: LocalizationFacadeService,
+): string => {
+	// console.debug('building team for tasks', tasks, mercReferenceData);
+	if (!mercReferenceData?.mercenaries?.length || !tasks?.length) {
+		console.warn('missing reference data');
+		return null;
+	}
+
+	const taskMercs = tasks
+		.filter((task) => task.type === VillageVisitorType.STANDARD)
+		.map((task) => allCards.getCard(task.mercenaryCardId)?.dbfId)
+		.map((mercDbfId) =>
+			buildMerc(
+				mercReferenceData.mercenaries.find((merc) => merc.cardDbfId === mercDbfId),
+				mercCollectionInfo,
+			),
+		)
+		.filter((m) => !!m);
+	const backupMercs = [...new Array(Math.max(0, 6 - (taskMercs?.length ?? 0))).keys()]
+		.map((_, i) => backupMercIds[i])
+		.filter((id) => !!id)
+		.map((backupId) =>
+			buildMerc(
+				mercReferenceData.mercenaries.find((merc) => merc.id === backupId),
+				mercCollectionInfo,
+			),
+		)
+		.filter((m) => !!m);
+	const finalMercs = [...taskMercs, ...backupMercs];
+	// console.debug('final mercs', finalMercs, taskMercs, backupMercs, backupMercIds);
+
+	const definition: MercenariesTeamDefinition = {
+		teamId: 1,
+		type: 1,
+		name: i18n.translateString('mercenaries.team-widget.task-team-default-name'),
+		mercenaries: finalMercs,
+	};
+	if (!definition?.mercenaries?.length) {
+		return null;
+	}
+
+	const deckstring = encodeMercs(definition);
+	// console.debug('mercs definition', deckstring, definition);
+	return deckstring;
+};
+
+export const buildMerc = (
+	refMerc: MercenariesReferenceData['mercenaries'][0],
+	mercCollectionInfo: MemoryMercenariesCollectionInfo,
+): MercenaryDefinition => {
+	if (!refMerc) {
+		return null;
+	}
+
+	const memMerc = mercCollectionInfo?.Mercenaries?.find((m) => m.Id === refMerc.id);
+	const equipmentId =
+		memMerc?.Loadout?.Equipment?.Id ??
+		(memMerc?.Equipments ?? []).find((e) => e.Equipped)?.Id ??
+		[...(memMerc?.Equipments ?? [])].sort((a, b) => b.Tier - a.Tier)[0]?.Id ??
+		refMerc.equipments[0]?.equipmentId;
+	const artVariationId = memMerc?.Loadout?.ArtVariation?.Id ?? memMerc.Skins.find((s) => s.Default)?.Id ?? 0;
+	const artVariationPremium = memMerc?.Loadout?.ArtVariationPremium ?? memMerc.Skins.find((s) => s.Default)?.Id ?? 0;
+	const result: MercenaryDefinition = {
+		mercenaryId: refMerc.id,
+		selectedArtVariationId: artVariationId,
+		selectedArtVariationPremium: artVariationPremium,
+		selectedEquipmentId: equipmentId,
+		sharedTeamMercenaryIsFullyUpgraded: 0,
+		sharedTeamMercenaryXp: 0,
+	};
+	// console.debug('merc for tasks', result);
+	return result;
+};

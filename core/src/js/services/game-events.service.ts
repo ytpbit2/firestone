@@ -494,6 +494,7 @@ export class GameEvents {
 				const summonAdditionProps2 = gameEvent.Value.AdditionalProps
 					? {
 							creatorCardId: gameEvent.Value.AdditionalProps.CreatorCardId,
+							lastAffectedByCardId: gameEvent.Value.AdditionalProps.LastAffectedByCardId,
 					  }
 					: null;
 				this.gameEventsEmitter.allEvents.next(
@@ -746,6 +747,7 @@ export class GameEvents {
 				this.gameEventsEmitter.allEvents.next(
 					GameEvent.build(GameEvent.CARD_CHANGED_IN_HAND, gameEvent, {
 						creatorCardId: gameEvent.Value.AdditionalProps.CreatorCardId,
+						lastAffectedByCardId: gameEvent.Value.AdditionalProps.LastAffectedByCardId,
 					}),
 				);
 				break;
@@ -753,7 +755,7 @@ export class GameEvents {
 				this.gameEventsEmitter.allEvents.next(
 					GameEvent.build(GameEvent.CARD_CHANGED_IN_DECK, gameEvent, {
 						creatorCardId: gameEvent.Value.AdditionalProps.CreatorCardId,
-						lastInfluencedByCardId: gameEvent.Value.AdditionalProps.LastInfluencedByCardId,
+						lastAffectedByCardId: gameEvent.Value.AdditionalProps.LastAffectedByCardId,
 					}),
 				);
 				break;
@@ -1371,6 +1373,9 @@ export class GameEvents {
 						relatedCards: gameEvent.Value.AdditionalProps.RelatedCards,
 					}),
 				);
+				break;
+			case 'MERCENARIES_SELECTED_TARGET':
+			case 'MERCENARIES_UNSELECTED_TARGET':
 				break;
 			default:
 				console.warn('unsupported game event', gameEvent);

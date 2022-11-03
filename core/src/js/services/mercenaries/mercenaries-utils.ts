@@ -1,4 +1,4 @@
-import { CardIds, GameTag, GameType, TagRole } from '@firestone-hs/reference-data';
+import { CardIds, GameTag, GameType, Race, TagRole } from '@firestone-hs/reference-data';
 import { CardsFacadeService } from '../cards-facade.service';
 import { MercenariesReferenceData } from './mercenaries-state-builder.service';
 
@@ -13,15 +13,15 @@ export const normalizeMercenariesCardId = (
 	// Some abilities (like Ysera's Emerald Oracle) have an id that finishes with an "a" for all levels
 	// except the last one.
 	// However, some other abilities (like Anathema / Benediction) share the same root id, and differ
-	// only wiht a/b, so we need to keep the suffix
-	let skinMatch = cardId.match(/.*_(\d\d)([ab]?)$/);
+	// only wiht a/b (or x/y, for Malfurion's Archdruid's Call variations), so we need to keep the suffix
+	let skinMatch = cardId.match(/.*_(\d\d)([a-z]?)$/);
 	if (skinMatch) {
-		return cardId.replace(/(.*)(_\d\d)([ab]?)$/, '$1_01$3');
+		return cardId.replace(/(.*)(_\d\d)([a-z]?)$/, '$1_01$3');
 	}
 	// Sometimes it is 01, sometimes 001
-	skinMatch = cardId.match(/.*_(\d\d\d)([ab]?)$/);
+	skinMatch = cardId.match(/.*_(\d\d\d)([a-z]?)$/);
 	if (skinMatch) {
-		return cardId.replace(/(.*)(_\d\d\d)([ab]?)$/, '$1_001$3');
+		return cardId.replace(/(.*)(_\d\d\d)([a-z]?)$/, '$1_001$3');
 	}
 	return cardId;
 };
@@ -181,6 +181,29 @@ export const getHeroRole = (roleFromEnum: string): 'caster' | 'fighter' | 'prote
 	}
 };
 
+export const getHeroFaction = (race: string): 'alliance' | 'horde' | 'none' | null => {
+	switch (race.toUpperCase()) {
+		case Race[Race.DRAENEI]:
+		case Race[Race.DWARF]:
+		case Race[Race.GNOME]:
+		case Race[Race.HIGHELF]:
+		case Race[Race.HUMAN]:
+		case Race[Race.NIGHTELF]:
+		case Race[Race.WORGEN]:
+			return 'alliance';
+		case Race[Race.BLOODELF]:
+		case Race[Race.GOBLIN]:
+		case Race[Race.HALFORC]:
+		case Race[Race.ORC]:
+		case Race[Race.TAUREN]:
+		case Race[Race.TROLL]:
+		case Race[Race.UNDEAD]:
+			return 'horde';
+		default:
+			return 'none';
+	}
+};
+
 export const isMercenaries = (gameType: GameType | string): boolean => {
 	return (
 		gameType === GameType.GT_MERCENARIES_AI_VS_AI ||
@@ -215,7 +238,9 @@ export const isPassiveMercsTreasure = (cardId: string, allCards: CardsFacadeServ
 		refCard?.mercenaryPassiveAbility ||
 		refCard.mechanics?.includes(GameTag[GameTag.HIDE_STATS]) ||
 		refCard.mechanics?.includes(GameTag[GameTag.HIDE_COST]) ||
-		refCard.mechanics?.includes(GameTag[GameTag.START_OF_GAME])
+		refCard.mechanics?.includes(GameTag[GameTag.START_OF_GAME]) ||
+		refCard.mechanics?.includes(GameTag[GameTag.DISCOVER]) ||
+		refCard.mechanics?.includes(GameTag[GameTag.BATTLECRY])
 	);
 };
 

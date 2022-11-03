@@ -27,10 +27,10 @@ export class DuelsRunIdService {
 		await this.store.initComplete();
 
 		this.store
-			.listen$(([main, nav]) => main.stats.gameStats?.stats)
+			.gameStats$()
 			.pipe(
-				filter(([stats]) => !!stats?.length),
-				map(([stats]) => stats?.filter((s) => isDuels(s.gameMode)) ?? []),
+				filter((stats) => !!stats?.length),
+				map((stats) => stats?.filter((s) => isDuels(s.gameMode)) ?? []),
 				map((stats) => stats[0]),
 				filter((latestDuelsMatch) => !!latestDuelsMatch),
 				distinctUntilChanged(),
@@ -38,11 +38,8 @@ export class DuelsRunIdService {
 				tap((info) => console.debug('[duels-run] latest duels game', info)),
 			)
 			.subscribe(this.lastDuelsGame$);
-		const currentRun$ = combineLatest(
-			this.lastDuelsGame$,
-			this.store.listen$(([main, nav]) => main.duels.runs),
-		).pipe(
-			map(([lastDuelsGame, [runs]]) =>
+		const currentRun$ = combineLatest(this.lastDuelsGame$, this.store.duelsRuns$()).pipe(
+			map(([lastDuelsGame, runs]) =>
 				lastDuelsGame?.reviewId
 					? runs?.find((run) => run.steps.some((s) => (s as GameStat).reviewId === lastDuelsGame?.reviewId))
 					: null,

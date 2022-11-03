@@ -17,11 +17,13 @@ import { BattlegroundsState } from '../../models/battlegrounds/battlegrounds-sta
 import { BgsHeroStat } from '../../models/battlegrounds/stats/bgs-hero-stat';
 import { BgsStats } from '../../models/battlegrounds/stats/bgs-stats';
 import { GameState } from '../../models/decktracker/game-state';
+import { DuelsDeckSummary } from '../../models/duels/duels-personal-deck';
 import { BattlegroundsAppState } from '../../models/mainwindow/battlegrounds/battlegrounds-app-state';
 import { BgsActiveTimeFilterType } from '../../models/mainwindow/battlegrounds/bgs-active-time-filter.type';
 import { BgsHeroSortFilterType } from '../../models/mainwindow/battlegrounds/bgs-hero-sort-filter.type';
 import { BgsRankFilterType } from '../../models/mainwindow/battlegrounds/bgs-rank-filter.type';
 import { BattlegroundsPersonalStatsHeroDetailsCategory } from '../../models/mainwindow/battlegrounds/categories/battlegrounds-personal-stats-hero-details-category';
+import { DeckSummary } from '../../models/mainwindow/decktracker/deck-summary';
 import { MainWindowState } from '../../models/mainwindow/main-window-state';
 import { NavigationState } from '../../models/mainwindow/navigation/navigation-state';
 import { GameStat } from '../../models/mainwindow/stats/game-stat';
@@ -30,14 +32,18 @@ import { MercenariesOutOfCombatState } from '../../models/mercenaries/out-of-com
 import { PatchInfo } from '../../models/patches';
 import { Preferences } from '../../models/preferences';
 import { CardsFacadeService } from '../cards-facade.service';
+import { DecksProviderService } from '../decktracker/main/decks-provider.service';
+import { DuelsDecksProviderService } from '../duels/duels-decks-provider.service';
 import { GameNativeState } from '../game/game-native-state';
 import { MainWindowStoreEvent } from '../mainwindow/store/events/main-window-store-event';
 import { HighlightSelector } from '../mercenaries/highlights/mercenaries-synergies-highlight.service';
 import { OverwolfService } from '../overwolf.service';
+import { GameStatsProviderService } from '../stats/game/game-stats-provider.service';
 import { arraysEqual } from '../utils';
 import { buildHeroStats } from './bgs-ui-helper';
 
 export type Selector<T> = (fullState: [MainWindowState, NavigationState, Preferences?]) => T;
+export type GameStatsSelector<T> = (stats: readonly GameStat[]) => T;
 export type GameStateSelector<T> = (gameState: GameState) => T;
 export type PrefsSelector<T> = (prefs: Preferences) => T;
 export type NativeGameStateSelector<T> = (state: GameNativeState) => T;
@@ -63,19 +69,19 @@ export class AppUiStoreService {
 	private mercenariesOutOfCombatStore: BehaviorSubject<MercenariesOutOfCombatState>;
 	private mercenariesSynergiesStore: BehaviorSubject<HighlightSelector>;
 
-	private bgsHeroStats: BehaviorSubject<readonly BgsHeroStat[]> = new BehaviorSubject<readonly BgsHeroStat[]>(null);
-	private duelsHeroStats: BehaviorSubject<readonly DuelsHeroPlayerStat[]> = new BehaviorSubject<
-		readonly DuelsHeroPlayerStat[]
-	>(null);
-	private duelsTopDecks: BehaviorSubject<readonly DuelsGroupedDecks[]> = new BehaviorSubject<
-		readonly DuelsGroupedDecks[]
-	>(null);
+	private bgsHeroStats = new BehaviorSubject<readonly BgsHeroStat[]>(null);
+	private duelsHeroStats = new BehaviorSubject<readonly DuelsHeroPlayerStat[]>(null);
+	private duelsTopDecks = new BehaviorSubject<readonly DuelsGroupedDecks[]>(null);
+	private gameStats = new BehaviorSubject<readonly GameStat[]>(null);
+	private decks = new BehaviorSubject<readonly DeckSummary[]>(null);
+	private duelsRuns = new BehaviorSubject<readonly DuelsRun[]>(null);
+	private duelsDecks = new BehaviorSubject<readonly DuelsDeckSummary[]>(null);
 
 	private stateUpdater: EventEmitter<MainWindowStoreEvent>;
 
 	private initialized = false;
 
-	constructor(private readonly ow: OverwolfService, private allCards: CardsFacadeService) {
+	constructor(private readonly ow: OverwolfService, private readonly allCards: CardsFacadeService) {
 		window['appStore'] = this;
 		window['debugAppStore'] = () =>
 			console.debug({
@@ -90,6 +96,10 @@ export class AppUiStoreService {
 				bgsHeroStats: this.bgsHeroStats.observers,
 				duelsHeroStats: this.duelsHeroStats.observers,
 				duelsTopDecks: this.duelsTopDecks.observers,
+				gameStats: this.gameStats.observers,
+				decks: this.decks.observers,
+				duelsRuns: this.duelsRuns.observers,
+				duelsDecks: this.duelsDecks.observers,
 			});
 	}
 
@@ -224,24 +234,31 @@ export class AppUiStoreService {
 	}
 
 	public bgHeroStats$(): Observable<readonly BgsHeroStat[]> {
-		return this.bgsHeroStats.asObservable().pipe(
-			distinctUntilChanged((a, b) => arraysEqual(a, b)),
-			// tap((all) => console.debug('[cd] reemitting info for bgsHeroStats$', all)),
-		);
+		return this.bgsHeroStats.asObservable().pipe(distinctUntilChanged((a, b) => arraysEqual(a, b)));
 	}
 
 	public duelsHeroStats$(): Observable<readonly DuelsHeroPlayerStat[]> {
-		return this.duelsHeroStats.asObservable().pipe(
-			distinctUntilChanged((a, b) => arraysEqual(a, b)),
-			// tap((all) => console.debug('[cd] reemitting info for bgsHeroStats$', all)),
-		);
+		return this.duelsHeroStats.asObservable().pipe(distinctUntilChanged((a, b) => arraysEqual(a, b)));
 	}
 
 	public duelsTopDecks$(): Observable<readonly DuelsGroupedDecks[]> {
-		return this.duelsTopDecks.asObservable().pipe(
-			distinctUntilChanged((a, b) => arraysEqual(a, b)),
-			// tap((all) => console.debug('[cd] reemitting info for bgsHeroStats$', all)),
-		);
+		return this.duelsTopDecks.asObservable().pipe(distinctUntilChanged((a, b) => arraysEqual(a, b)));
+	}
+
+	public gameStats$(): Observable<readonly GameStat[]> {
+		return this.gameStats.asObservable().pipe(distinctUntilChanged((a, b) => arraysEqual(a, b)));
+	}
+
+	public duelsRuns$(): Observable<readonly DuelsRun[]> {
+		return this.duelsRuns.asObservable().pipe(distinctUntilChanged((a, b) => arraysEqual(a, b)));
+	}
+
+	public duelsDecks$(): Observable<readonly DuelsDeckSummary[]> {
+		return this.duelsDecks.asObservable().pipe(distinctUntilChanged((a, b) => arraysEqual(a, b)));
+	}
+
+	public decks$(): Observable<readonly DeckSummary[]> {
+		return this.decks.asObservable().pipe(distinctUntilChanged((a, b) => arraysEqual(a, b)));
 	}
 
 	public send(event: MainWindowStoreEvent) {
@@ -254,7 +271,39 @@ export class AppUiStoreService {
 		this.initBgsHeroStats();
 		this.initDuelsHeroStats();
 		this.initDuelsTopDecks();
+		this.initGameStats();
+		this.initDecks();
+		this.initDuelsRuns();
+		this.initDuelsDecks();
 		this.initialized = true;
+	}
+
+	private initDuelsDecks() {
+		console.debug('duels decks', this.ow.getMainWindow().duelsDecksProvider);
+		const duelsDecks: BehaviorSubject<readonly DuelsDeckSummary[]> = (this.ow.getMainWindow()
+			.duelsDecksProvider as DuelsDecksProviderService).duelsDecks$;
+		duelsDecks.subscribe(this.duelsDecks);
+	}
+
+	private initDuelsRuns() {
+		console.debug('duels runs', this.ow.getMainWindow().duelsDecksProvider);
+		const duelsRuns: BehaviorSubject<readonly DuelsRun[]> = (this.ow.getMainWindow()
+			.duelsDecksProvider as DuelsDecksProviderService).duelsRuns$;
+		duelsRuns.subscribe(this.duelsRuns);
+	}
+
+	private initDecks() {
+		console.debug('decks', this.ow.getMainWindow().decksProvider);
+		const decks$: BehaviorSubject<readonly DeckSummary[]> = (this.ow.getMainWindow()
+			.decksProvider as DecksProviderService).decks$;
+		decks$.subscribe(this.decks);
+	}
+
+	private initGameStats() {
+		console.debug('gameStatsProvider', this.ow.getMainWindow().gameStatsProvider);
+		const gameStats$: BehaviorSubject<readonly GameStat[]> = (this.ow.getMainWindow()
+			.gameStatsProvider as GameStatsProviderService).gameStats$;
+		gameStats$.subscribe(this.gameStats);
 	}
 
 	private initDuelsTopDecks() {
@@ -309,32 +358,36 @@ export class AppUiStoreService {
 	}
 
 	private initDuelsHeroStats() {
-		this.listen$(
-			([main, nav]) => main.duels.globalStats?.heroes,
-			([main, nav]) => main.duels.runs,
-			([main, nav]) => nav.navigationDuels.heroSearchString,
-			([main, nav, prefs]) => prefs.duelsActiveStatTypeFilter,
-			([main, nav, prefs]) => prefs.duelsActiveGameModeFilter,
-			([main, nav, prefs]) => prefs.duelsActiveTimeFilter,
-			([main, nav, prefs]) => prefs.duelsActiveHeroesFilter2,
-			([main, nav, prefs]) => prefs.duelsActiveHeroPowerFilter,
-			([main, nav, prefs]) => prefs.duelsActiveSignatureTreasureFilter,
-			([main, nav, prefs]) => main.duels.currentDuelsMetaPatch,
+		combineLatest(
+			this.duelsRuns$(),
+			this.listen$(
+				([main, nav]) => main.duels.globalStats?.heroes,
+				([main, nav]) => nav.navigationDuels.heroSearchString,
+				([main, nav, prefs]) => prefs.duelsActiveStatTypeFilter,
+				([main, nav, prefs]) => prefs.duelsActiveGameModeFilter,
+				([main, nav, prefs]) => prefs.duelsActiveTimeFilter,
+				([main, nav, prefs]) => prefs.duelsActiveHeroesFilter2,
+				([main, nav, prefs]) => prefs.duelsActiveHeroPowerFilter,
+				([main, nav, prefs]) => prefs.duelsActiveSignatureTreasureFilter,
+				([main, nav, prefs]) => main.duels.currentDuelsMetaPatch,
+			),
 		)
 			.pipe(
-				filter(([heroes, other]) => !!heroes?.length),
+				filter(([duelsRuns, [heroes, other]]) => !!heroes?.length),
 				map(
 					([
-						duelStats,
 						runs,
-						heroSearchString,
-						statType,
-						gameMode,
-						timeFilter,
-						heroFilter,
-						heroPowerFilter,
-						sigTreasureFilter,
-						patch,
+						[
+							duelStats,
+							heroSearchString,
+							statType,
+							gameMode,
+							timeFilter,
+							heroFilter,
+							heroPowerFilter,
+							sigTreasureFilter,
+							patch,
+						],
 					]) =>
 						[
 							filterDuelsHeroStats(
@@ -370,24 +423,26 @@ export class AppUiStoreService {
 	}
 
 	private initBgsHeroStats() {
-		this.listen$(
-			([main, nav]) => main.battlegrounds.globalStats,
-			([main, nav]) => main.stats.gameStats?.stats,
-			([main, nav, prefs]) => prefs.bgsActiveTimeFilter,
-			([main, nav, prefs]) => prefs.bgsActiveRankFilter,
-			([main, nav, prefs]) => prefs.bgsActiveHeroSortFilter,
-			([main, nav]) => main.battlegrounds.currentBattlegroundsMetaPatch,
+		combineLatest(
+			this.gameStats$(),
+			this.listen$(
+				([main, nav]) => main.battlegrounds.globalStats,
+				([main, nav, prefs]) => prefs.bgsActiveTimeFilter,
+				([main, nav, prefs]) => prefs.bgsActiveRankFilter,
+				([main, nav, prefs]) => prefs.bgsActiveHeroSortFilter,
+				([main, nav]) => main.battlegrounds.currentBattlegroundsMetaPatch,
+			),
 		)
 			.pipe(
 				distinctUntilChanged((a, b) => arraysEqual(a, b)),
 				map(
-					([stats, matches, timeFilter, rankFilter, heroSort, patch]) =>
+					([gameStats, [stats, timeFilter, rankFilter, heroSort, patch]]) =>
 						[
 							stats,
-							matches.filter(
+							gameStats?.filter(
 								(stat) =>
 									stat.gameMode === 'battlegrounds' || stat.gameMode === 'battlegrounds-friendly',
-							),
+							) ?? [],
 							timeFilter,
 							rankFilter <= 100 ? rankFilter : 100,
 							heroSort,
